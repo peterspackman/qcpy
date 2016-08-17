@@ -1,0 +1,6 @@
+# {{job.method}}/{{job.basis_set}}
+
+{{job.name}}
+
+{{geom.charge}} {{geom.multiplicity}}
+{{geom.as_lines('{symbol} {x} {y} {z}')}}

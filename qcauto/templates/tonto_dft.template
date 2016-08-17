@@ -1,0 +1,60 @@
+{
+
+   name=     h2o
+   
+   output_style_options= {
+      real_precision= 4
+   }
+   
+   basis_name= cc-pVDZ
+   
+   charge=   0
+   multiplicity= 1
+   
+   atoms= {
+
+      keys= { label= { units= angstrom } pos= }
+   
+      data= {
+         8     -0.028260    0.000029    0.000000
+         1      0.599917    0.767685    0.000000
+         1      0.599941   -0.767609    0.000000
+      }
+
+   }
+
+   put
+
+   becke_grid = { 
+      set_defaults 
+      accuracy= high
+   }
+   becke_grid = { put }
+
+
+   scfdata= {
+
+      initial_density= promolecule
+
+      kind=           {{job.tonto_kind}} 
+
+      dft_exchange_functional= {{job.tonto_exchange}}
+      dft_correlation_functional= {{job.tonto_correlation}} 
+
+      direct=          on
+
+      convergence= 0.00001
+
+      diis= { convergence_tolerance= 0.00001 }
+
+      output= NO
+      output_results= YES
+
+   }
+   
+   scf
+
+   delete_scf_archives
+
+}
+
