@@ -1,11 +1,5 @@
 from unittest import TestCase
-from qcauto.job import Job
+from qcauto.jobs import GaussianJob
 
-class TestJob(TestCase):
-    job = Job()
-
-    def test_run(self):
-        self.job.run()
-
-    def test_result(self):
-        self.job.result()
+class TestGaussianJob(TestCase):
+    pass

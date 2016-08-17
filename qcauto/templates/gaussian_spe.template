@@ -3,4 +3,7 @@
 {{job.name}}
 
 {{geom.charge}} {{geom.multiplicity}}
-{{geom.as_lines('{symbol} {x} {y} {z}')}}
+{%- for line in geom.as_lines("{symbol:<2}  {x: 09.7f}  {y: 09.7f}  {z: 09.7f}") %}
+{{ '%s' | format(line)}}
+{%- endfor %}
+{{'\n'}}

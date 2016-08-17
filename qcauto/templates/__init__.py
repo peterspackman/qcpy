@@ -1,4 +1,6 @@
 import attr
+import os
+import logging
 from jinja2 import Environment, FileSystemLoader
 _env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__))))
 
