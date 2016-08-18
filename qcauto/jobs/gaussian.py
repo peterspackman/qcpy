@@ -19,32 +19,31 @@ class GaussianJob(object):
     input_ext = attr.ib('.gjf')
     output_ext = attr.ib('.log')
     template = attr.ib(default=GaussianSinglePointEnergy)
+    _input_file = attr.ib(default=None)
+    _output_file = attr.ib(default=None)
+    success = attr.ib(default=False)
 
     def write_input_file(self, filename):
         log.debug("Writing input file to {}".format(filename))
         with open(filename, 'w') as f:
             f.write(self.template.render(job=self, geom=self.geometry))
 
-    def run(self):
-        log.debug("Running job {}".format(self.name))
+    def before_run(self):
+        file_basename = self.name + self.method + self.basis_set
+        self._input_file = file_basename + self.input_ext
+        self._output_file = file_basename + self.output_ext
+        self.write_input_file(self._input_file)
 
-        if not isinstance(self._runner, NullRunner):
-            file_basename = self.name + self.method + self.basis_set
-            input_file = file_basename + self.input_ext
+    def args(self):
+        return [self._input_file]
 
-            self.write_input_file(input_file)
-            self._runner.run(args=[input_file])
-            if not self.successful():
-                return None
-            return self.extract_energy(file_basename + self.output_ext)
-        else:
-            return None
+    def after_run(self):
+        if self.success:
+            self._result = self.extract_energy(self._output_file) 
 
-    def set_runner(self, runner):
-        self._runner = runner
+    def result(self):
+        return self._result
 
-    def successful(self):
-        return self._runner.successful()
 
     def extract_energy(self, filename):
         log.debug("Extracting SCF energy from {}".format(filename))

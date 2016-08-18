@@ -6,7 +6,6 @@ from .test_geometry import H2O
 
 class TestJob(TestCase):
     job = GaussianJob(H2O)
-    job.set_runner(NullRunner())
 
-    def test_run(self):
-        assert self.job.run() is None
+    def test_name(self):
+        assert self.job.name == "gaussian_job"

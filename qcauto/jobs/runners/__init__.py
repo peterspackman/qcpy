@@ -1,15 +1,17 @@
 import logging
+import attr
 from .localrunner import LocalRunner
 log = logging.getLogger(__name__)
 
 class NullRunner(object):
     """ Do nothing, return None"""
+    _jobs = attr.ib(default=attr.Factory(list))
 
-    def run(self, args=None):
-        pass
+    def add_job(self, job):
+        self._jobs.append(job)
 
-    def result(self):
-        return None
-
-    def successful(self):
-        return True
+    def run(self):
+        while len(self._jobs) > 0:
+            job = self._jobs.pop(0)
+            job.success = True
+            yield job

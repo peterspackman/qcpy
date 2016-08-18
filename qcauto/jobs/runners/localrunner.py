@@ -13,15 +13,21 @@ def path_is_executable(instance, attribute, value):
 class LocalRunner:
     executable_path = attr.ib(validator=path_is_executable)
     _success = attr.ib(default=False)
+    _jobs = attr.ib(default=attr.Factory(list))
 
-    def run(self, args):
-        command = self.executable_path + ' ' + ' '.join(args)
-        log.debug('Starting {} '.format(command))
-        self._success = execute(command)
-        log.debug('{} success: {}'.format(command, self._success))
+    def add_job(self, job):
+        self._jobs.append(job)
 
-    def successful(self):
-        return self._success
+    def run(self):
+        while not len(self._jobs) == 0:
+            job = self._jobs.pop(0)
+            log.debug('Starting {} '.format(job.name))
 
-    def result(self):
-        return self._success
+            job.before_run()
+
+            command = self.executable_path + ' ' + ' '.join(job.args())
+            job.success = execute(command)
+
+            job.after_run()
+            log.debug('{} success: {}'.format(command, self._success))
+            yield job
