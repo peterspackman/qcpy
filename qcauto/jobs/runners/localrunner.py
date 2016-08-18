@@ -11,6 +11,7 @@ def path_is_executable(instance, attribute, value):
 
 @attr.s
 class LocalRunner:
+    """ Currently totally sequential """
     executable_path = attr.ib(validator=path_is_executable)
     _success = attr.ib(default=False)
     _jobs = attr.ib(default=attr.Factory(list))
@@ -22,12 +23,9 @@ class LocalRunner:
         while not len(self._jobs) == 0:
             job = self._jobs.pop(0)
             log.debug('Starting {} '.format(job.name))
-
             job.before_run()
-
             command = self.executable_path + ' ' + ' '.join(job.args())
             job.success = execute(command)
-
             job.after_run()
             log.debug('{} success: {}'.format(command, self._success))
             yield job
