@@ -4,10 +4,11 @@
     Parser for .xyz file formats
 """
 from pathlib import Path
-from qcauto.atom import Atom, Coordinates
+from qcauto import Atom, Coordinates
 from qcauto.formats import FileFormatError
 import periodictable
 import sys
+
 
 class XYZFile():
     atoms = []
@@ -35,7 +36,7 @@ class XYZFile():
                         raise FileFormatError(self.filename,
                                               self._current_line,
                                               "Too many atoms in file")
-                    atom = self._parse_atom_line(line) 
+                    atom = self._parse_atom_line(line)
                 except(FileFormatError) as e:
                     print(e)
                     return
@@ -44,7 +45,6 @@ class XYZFile():
     def __str__(self):
         return(str(self.atoms))
 
-
     def _parse_atom_line(self, line):
         tokens = line.split()
         try:
@@ -52,12 +52,10 @@ class XYZFile():
         except KeyError:
             msg = "Unknown element symbol {}".format(tokens[0])
             raise FileFormatError(self.filename, self._current_line, msg)
-        
+
         x, y, z = float(tokens[1]), float(tokens[2]), float(tokens[3])
 
         if len(tokens) > 4:
             msg = "Too many tokens on line ({})".format(len(center))
             raise FileFormatError(self.filename, self._current_line, msg)
         return Atom(element, Coordinates(x, y, z))
-
-

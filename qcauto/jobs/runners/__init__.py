@@ -7,5 +7,5 @@ class NullRunner(object):
     def run(self):
         pass
 
-    def result():
+    def result(self):
         return None

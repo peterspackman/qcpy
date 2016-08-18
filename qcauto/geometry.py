@@ -16,6 +16,7 @@ _specs = {
              "{center.z: 09.7f}",
 }
 
+
 @attr.s
 class Geometry:
     atoms = attr.ib(default=attr.Factory(list))
@@ -24,7 +25,8 @@ class Geometry:
 
     @staticmethod
     def from_xyz_file(filename):
-        return Geometry(atoms=XYZFile(filename).atoms, charge=0, multiplicity=1)
+        return Geometry(atoms=XYZFile(filename).atoms,
+                        charge=0, multiplicity=1)
 
     def elements(self):
         return [a.element for a in self.atoms]
@@ -32,7 +34,8 @@ class Geometry:
     def molecular_formula(self):
         f_string = ""
         symbols = map(lambda x: x.symbol, self.elements())
-        for symbol, count in sorted(Counter(symbols).items(), key=lambda c: c[0]):
+        for symbol, count in sorted(Counter(symbols).items(),
+                                    key=lambda c: c[0]):
             f_string += symbol + (str(count) if count > 1 else "")
         log.debug('formula = {}'.format(f_string))
         return f_string
@@ -40,6 +43,5 @@ class Geometry:
     def as_lines(self, format="g09"):
         if format in _specs.keys():
             format_string = _specs[format]
-        return [format_string.format(element=atom.element,
-                                     center=atom.center) for atom in self.atoms]
-
+        return [format_string.format(element=a.element,
+                                     center=a.center) for a in self.atoms]
