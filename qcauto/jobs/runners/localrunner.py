@@ -12,8 +12,16 @@ def path_is_executable(instance, attribute, value):
 @attr.s
 class LocalRunner:
     executable_path = attr.ib(validator=path_is_executable)
-    args = attr.ib(default=attr.Factory(list))
+    _success = attr.ib(default=False)
 
-    def run(self):
-        log.info('Starting {} '.format(executable_path))
-        return execute(executable_path)
+    def run(self, args):
+        command = self.executable_path + ' ' + ' '.join(args)
+        log.debug('Starting {} '.format(command))
+        self._success = execute(command)
+        log.debug('{} success: {}'.format(command, self._success))
+
+    def successful(self):
+        return self._success
+
+    def result(self):
+        return self._success
