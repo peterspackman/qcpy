@@ -5,7 +5,7 @@ log = logging.getLogger(__name__)
 class NullRunner(object):
     """ Do nothing, return None"""
 
-    def run(self):
+    def run(self, args=None):
         pass
 
     def result(self):

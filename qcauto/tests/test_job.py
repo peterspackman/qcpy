@@ -5,7 +5,8 @@ from .test_geometry import H2O
 
 
 class TestJob(TestCase):
-    job = GaussianJob(H2O, runner=NullRunner())
+    job = GaussianJob(H2O)
+    job.set_runner(NullRunner())
 
     def test_run(self):
         assert self.job.run() is None

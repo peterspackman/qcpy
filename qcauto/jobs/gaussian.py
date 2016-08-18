@@ -27,14 +27,18 @@ class GaussianJob(object):
 
     def run(self):
         log.debug("Running job {}".format(self.name))
-        file_basename = self.name + self.method + self.basis_set
-        input_file = file_basename + self.input_ext
 
-        self.write_input_file(input_file)
-        self._runner.run(args=[input_file])
-        if not self.successful():
+        if not isinstance(self._runner, NullRunner):
+            file_basename = self.name + self.method + self.basis_set
+            input_file = file_basename + self.input_ext
+
+            self.write_input_file(input_file)
+            self._runner.run(args=[input_file])
+            if not self.successful():
+                return None
+            return self.extract_energy(file_basename + self.output_ext)
+        else:
             return None
-        return self.extract_energy(file_basename + self.output_ext)
 
     def set_runner(self, runner):
         self._runner = runner
