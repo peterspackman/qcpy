@@ -1,10 +1,11 @@
 import os
 import logging
 import attr
+import re
 from attr.validators import instance_of
-from qcauto.geometry import Geometry
+from qcauto import Geometry
 from qcauto.templates import GaussianSinglePointEnergy
-from qcauto.jobs.runners import LocalRunner
+from qcauto.jobs.runners import NullRunner
 log = logging.getLogger(__name__)
 
 @attr.s
@@ -14,16 +15,19 @@ class GaussianJob(object):
     method = attr.ib(default="HF")
     name = attr.ib(default='gaussian_job', validator=instance_of(str))
     template = attr.ib(default=GaussianSinglePointEnergy)
-    _runner = attr.ib(default=LocalRunner(executable_path='/Users/prs/bin/g09/g09'))
+    _runner = attr.ib(default=NullRunner())
 
     def write_input_file(self, filename):
+        log.debug("Writing input file to {}".format(filename))
         with open(filename, 'w') as f:
             f.write(self.template.render(job=self, geom=self.geometry))
 
     def run():
+        log.debug("Running job {}".format(self.name))
         _runner.run()
 
-    def extract_gjf_energy(filename):
+    def extract_energy(self, filename):
+        log.debug("Extracting SCF energy from {}".format(filename))
         with open(filename) as f:
             for line in f:
                 if 'SCF Done' in line:
