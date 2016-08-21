@@ -27,5 +27,5 @@ class LocalRunner:
             command = self.executable_path + ' ' + ' '.join(job.args())
             job.success = execute(command)
             job.after_run()
-            log.debug('{} success: {}'.format(command, self._success))
+            log.debug('{} success: {}'.format(command, job.success))
             yield job
