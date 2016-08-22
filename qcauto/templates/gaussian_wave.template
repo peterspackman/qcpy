@@ -1,4 +1,4 @@
-%Chk=wavefunction
+%Chk={{job.fchk_name}}
 # {{job.method}}/{{job.basis_set}} 6d 10f nosymm opt freq 
 
 {{job.name}}
