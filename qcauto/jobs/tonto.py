@@ -5,6 +5,7 @@ log = logging.getLogger(__name__)
 
 
 class TontoJob(InputFileJob):
+    """ Abstract base class for tonto jobs"""
     _basis_set = "3-21G"
     _method = "RHF"
     _name = "tonto_job"
@@ -19,10 +20,16 @@ class TontoJob(InputFileJob):
     def before_run(self):
         self.write_input_file(self._input_file)
 
-    def args(self):
-        return []
+    def read_output_file(self, filename):
+        pass
 
 
 class TontoRobyBondIndexJob(InputFileJob):
     fchk = "wavefunction.fchk"
     _template = TontoRobyBondIndex
+
+    def write_input_file(self, filename):
+        super().write_input_file()
+
+    def read_output_file(self, filename):
+        super().read_output_file()

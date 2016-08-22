@@ -17,10 +17,14 @@ class GaussianJob(GeometryJob, InputFileJob):
             f.write(self.template.render(job=self, geom=self.geometry()))
 
     def before_run(self):
+        log.debug("before_run in {}".format(self.__class__.__name__))
         file_basename = self._name + self._method + self._basis_set
         self._input_file = file_basename + self._input_ext
         self._output_file = file_basename + self._output_ext
         self.write_input_file(self._input_file)
+
+    def read_output_file(self, filename):
+        pass
 
     def args(self):
         return [self._input_file]
@@ -32,6 +36,7 @@ class GaussianWaveFunctionJob(GaussianJob):
 
     def __init__(self, geometry):
         self._geometry = geometry
+
 
 class GaussianSinglePointEnergyJob(GaussianJob):
     _template = GaussianSinglePointEnergy

@@ -18,6 +18,9 @@ class InputFileJob(Job):
     _input_file = "stdin"
     _template = EmptyTemplate
 
+    def has_requirements(self):
+        return True
+
     def write_input_file(self, filename):
         raise NotImplementedError
 
