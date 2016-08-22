@@ -12,6 +12,9 @@ class Job(object):
     def name(self):
         return self._name
 
+    def set_name(self, name):
+        self._name = name
+
 
 class InputFileJob(Job):
     """ Abstract base class of jobs with input/output files"""
