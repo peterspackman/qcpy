@@ -13,5 +13,6 @@ class NullRunner(object):
     def run(self):
         while len(self._jobs) > 0:
             job = self._jobs.pop(0)
+            job.before_run()
             job.success = True
             yield job
