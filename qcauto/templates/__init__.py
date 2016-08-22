@@ -8,4 +8,5 @@ _env = Environment(
 
 GaussianSinglePointEnergy = _env.get_template('gaussian_spe.template')
 TontoDFTSinglePointEnergy = _env.get_template('tonto_dft.template')
+TontoRobyBondIndex = _env.get_template('tonto_roby.template')
 GaussianWaveFunction = _env.get_template('gaussian_wave.template')

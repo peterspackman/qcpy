@@ -1,7 +1,7 @@
 import logging
 import attr
 from attr.validators import instance_of
-from qcauto.formats.xyz import XYZFile
+from .formats.xyz import XYZFile
 from collections import Counter
 log = logging.getLogger(__name__)
 
@@ -45,3 +45,7 @@ class Geometry:
             format_string = _specs[format]
         return [format_string.format(element=a.element,
                                      center=a.center) for a in self.atoms]
+
+    @property
+    def n_atoms(self):
+        return len(self.atoms)

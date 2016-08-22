@@ -1,5 +1,6 @@
 import attr
-from .gaussian import GaussianJob
+from .gaussian import GaussianJob, GaussianWaveFunctionJob
+from .tonto import TontoRobyBondIndexJob
 
 class Job(object):
 
