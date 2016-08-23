@@ -1,5 +1,5 @@
 # Quantum Chemistry Automaton
-
+[![Build Status](https://travis-ci.org/peterspackman/qcauto.svg?branch=master)](https://travis-ci.org/peterspackman/qcauto)
 What: simple library to automate creation (and execution) of QC jobs.
 
 How:
