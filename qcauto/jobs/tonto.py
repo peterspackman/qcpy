@@ -9,27 +9,30 @@ class TontoJob(InputFileJob):
     _basis_set = "3-21G"
     _method = "RHF"
     _name = "tonto_job"
-    _input_file = 'stdin'
-    _output_file = 'stdout'
+    _has_dependencies = True
+    _requires_postprocessing = True
 
     def write_input_file(self, filename):
         log.debug("Writing input file to {}".format(filename))
         with open(filename, 'w') as f:
             f.write(self._template.render(job=self))
 
-    def before_run(self):
-        self.write_input_file(self._input_file)
+    def resolve_dependencies(self):
+        log.debug("Resolving dependencies for tonto job {}".format(self.name))
+        self.write_input_file(self.input_filename)
 
     def read_output_file(self, filename):
         pass
 
 
-class TontoRobyBondIndexJob(InputFileJob):
-    fchk = "wavefunction.fchk"
+class TontoRobyBondIndexJob(TontoJob):
+    _fchk_filename = "wavefunction.fchk"
     _template = TontoRobyBondIndex
 
-    def write_input_file(self, filename):
-        super().write_input_file()
+    @property
+    def fchk_filename(self):
+        return self._fchk_filename
 
-    def read_output_file(self, filename):
-        super().read_output_file()
+    def resolve_dependencies(self):
+        assert os.path.exists(self.fchk)
+        super().resolve_dependencies()

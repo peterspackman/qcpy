@@ -4,7 +4,7 @@ from qcauto.jobs import GaussianSinglePointEnergyJob, TontoRobyBondIndexJob
 from .test_geometry import H2O
 
 
-class TestJob:
+class JobCommon:
     """ Base class for testing jobs """
     @property
     def name(self):
@@ -23,12 +23,18 @@ class TestJob:
         assert self.name == self.job.name
 
 
-class TestTontoDFTJob(TestJob, TestCase):
+class TestTontoRobyBondIndexJob(JobCommon, TestCase):
     _name = "tonto_dft_job"
     _job = TontoRobyBondIndexJob()
 
+    def test_dependencies_exist(self):
+        assert self.job.has_dependencies
 
-class TestGaussianSinglePointEnergyJob(TestJob, TestCase):
+
+class TestGaussianSinglePointEnergyJob(JobCommon, TestCase):
     _name = "gaussian_energy_job"
     _geometry = H2O
     _job = GaussianSinglePointEnergyJob(_geometry)
+
+    def test_dependencies_exist(self):
+        assert self.job.has_dependencies
