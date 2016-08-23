@@ -1,6 +1,6 @@
 import logging
+import os
 from qcauto.templates import EmptyTemplate
-from qcauto import Geometry
 log = logging.getLogger(__name__)
 
 
@@ -9,6 +9,11 @@ class Job(object):
     _name = "job"
     _has_dependencies = False
     _requires_postprocessing = False
+    _working_directory = None
+
+    @property
+    def working_directory(self):
+        return self._working_directory
 
     @property
     def has_dependencies(self):
@@ -45,6 +50,7 @@ class InputFileJob(Job):
     _input_filename = "stdin"
     _output_file = "stdout"
     _template = EmptyTemplate
+    _has_dependencies = True
 
     @property
     def input_filename(self):
@@ -53,6 +59,10 @@ class InputFileJob(Job):
     @property
     def output_file(self):
         return self._output_file
+
+    def set_working_directory(self, dirname):
+        assert os.path.isdir(dirname)
+        self._working_directory = dirname
 
     def render(self, **kwargs):
         """ Render the input file template.

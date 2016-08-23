@@ -37,15 +37,6 @@ class GaussianJob(GeometryJob, InputFileJob):
     def read_output_file(self, filename):
         pass
 
-    def after_run(self):
-        pass
-
-    def result(self):
-        pass
-
-    def args(self):
-        return [self._input_file]
-
 
 class GaussianWaveFunctionJob(GaussianJob):
     _template = GaussianWaveFunction

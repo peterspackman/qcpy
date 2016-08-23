@@ -1,10 +1,13 @@
 # Quantum Chemistry Automaton
 
-[![Build Status](https://travis-ci.org/peterspackman/qcauto.svg?branch=master)](https://travis-ci.org/peterspackman/qcauto)
+[![Build Status](
+    https://travis-ci.org/peterspackman/qcauto.svg?branch=master)
+    ](https://travis-ci.org/peterspackman/qcauto)
 
 ### What:
 
-A simple library to automate creation (and execution) of quantum chemistry and other 'jobs'.
+A simple library to automate creation (and execution) of quantum 
+chemistry and other 'jobs'.
 
 ### How:
 
@@ -21,4 +24,5 @@ For input file based programs we have templates
 
 
 ## Runners
-Different kinds of 'runners' for running jobs locally, remotely on PBS/Slurm etc.
+Different kinds of 'runners' for running jobs locally,
+remotely on PBS/Slurm etc.
