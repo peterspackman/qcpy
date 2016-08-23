@@ -30,6 +30,7 @@ class InputFileJob(Job):
     def read_output_file(self, filename):
         raise NotImplementedError
 
+
 class GeometryJob(Job):
     """ Abstract base class of job requiring a geometry """
     _geometry = None
