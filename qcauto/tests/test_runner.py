@@ -22,3 +22,4 @@ class TestEchoJob(TestCase):
         self.runner.add_jobs(self.jobs)
         for job, status in self.runner.run():
             assert status == True
+            assert job.stdout.strip() == job.name

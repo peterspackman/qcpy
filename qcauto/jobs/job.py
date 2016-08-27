@@ -10,10 +10,22 @@ class Job(object):
     _has_dependencies = False
     _requires_postprocessing = False
     _working_directory = None
+    _requires_shell = True
+    _capture_stdout = True
+    _stdout = ""
+    _stderr = ""
 
     @property
     def working_directory(self):
         return self._working_directory
+
+    @property
+    def stdout(self):
+        return self._stdout
+
+    @property
+    def capture_stdout(self):
+        return self._capture_stdout
 
     @property
     def has_dependencies(self):
