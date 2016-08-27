@@ -13,6 +13,10 @@ class NullRunner(object):
         log.debug("Adding {} to job queue.".format(job.name))
         self._jobs.append(job)
 
+    def add_jobs(self, jobs):
+        for job in jobs:
+            self.add_job(job)
+
     def run_job(self, job):
         return True
 
