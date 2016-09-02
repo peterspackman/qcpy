@@ -1,11 +1,11 @@
 import logging
 import attr
 from attr.validators import instance_of
-from .formats.xyz import XYZFile
+from qcauto.formats.xyz import XYZFile
 from collections import Counter
 log = logging.getLogger(__name__)
 
-_specs = {
+_default_specs = {
     "g09": "{element.symbol:<2}  "
            "{center.x: 09.7f}  "
            "{center.y: 09.7f}  "
@@ -41,8 +41,8 @@ class Geometry:
         return f_string
 
     def as_lines(self, format="g09"):
-        if format in _specs.keys():
-            format_string = _specs[format]
+        if format in _default_specs.keys():
+            format_string = _default_specs[format]
         return [format_string.format(element=a.element,
                                      center=a.center) for a in self.atoms]
 
