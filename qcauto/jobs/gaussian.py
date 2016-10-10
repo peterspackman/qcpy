@@ -12,16 +12,22 @@ class GaussianJob(GeometryJob, InputFileJob):
     _output_ext = '.log'
     _has_dependencies = True
     _requires_postprocessing = True
+    _command = 'echo'
 
-    def __init__(self, geometry, basis_set="3-21G", method="HF"):
+    def __init__(self, geometry, basis_set="3-21G", method="HF", command='/Users/prs/bin/g09/g09'):
         self._geometry = geometry
         self._method = method
         self._basis_set = basis_set
+        self._command = command
 
     def write_input_file(self, filename):
         log.debug("Writing input file to {}".format(filename))
         with open(filename, 'w') as f:
             f.write(self.render(job=self, geom=self.geometry()))
+
+    @property
+    def command(self):
+        return self._command
 
     @property
     def default_basename(self):
