@@ -1,5 +1,5 @@
 from unittest import TestCase
-from periodictable import O, H
+from qcauto.element import O, H
 from qcauto.atom import Atom
 from qcauto.coordinates import Coordinates
 from qcauto.geometry import Geometry

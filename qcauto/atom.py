@@ -1,12 +1,12 @@
 import attr
 from qcauto.coordinates import Coordinates
+from qcauto.element import Element, periodictable
 from attr.validators import instance_of
-import periodictable
 
 
 @attr.s
 class Atom:
-    element = attr.ib(validator=instance_of(periodictable.core.Element))
+    element = attr.ib(validator=instance_of(Element))
     center = attr.ib(validator=instance_of(Coordinates))
 
     @staticmethod
@@ -17,6 +17,6 @@ class Atom:
         >>> Atom.from_symbol_and_location('Bo', Coordinates(1, 1, 0))
         Traceback (most recent call last):
          ...
-        ValueError: unknown element Bo
+        KeyError: "No such element 'Bo'"
         """
-        return Atom(periodictable.elements.symbol(symbol), center=center)
+        return Atom(periodictable[symbol], center=center)
