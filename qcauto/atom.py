@@ -8,7 +8,7 @@ class Atom:
     """TODO Atom documentation"""
     _element = None
     _center = None
-    
+
     def __init__(self, element, center):
         self._element = element
         self._center = center
@@ -21,12 +21,14 @@ class Atom:
 
     @property
     def element(self):
+        """Return the element object associated with this atom"""
         return self._element
-    
+
     @property
     def center(self):
+        """Return the center of the atom in cartesian coordinates"""
         return self._center
-    
+
     @property
     def covalent_radius(self):
         """This atom's covalent radius in angstroms"""
