@@ -18,16 +18,13 @@ def main():
 
     for method in ['HF', 'BLYP', 'BVWN5']:
         for basis_set in ['STO-3G', '3-21G']:
-            name = 'h2o-{}-{}'.format(method, basis_set)
+            name = 'h2o'
             job = GaussianJob(geom, basis_set=basis_set, method=method)
             job.set_name(name)
             runner.add_job(job)
 
     for job in runner.run():
-        if job.success:
-            print('{} (E = {})'.format(job.name, job.result()))
-        else:
-            print('{} returned None'.format(job.name))
+        print(job)
 
 if __name__ == '__main__':
     main()

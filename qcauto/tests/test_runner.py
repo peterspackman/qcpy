@@ -5,6 +5,8 @@ from unittest import TestCase
 
 class EchoJob(Job):
     _command = "echo {job.name}"
+    _capture_stdout = True
+    _requires_shell = True
 
     def __init__(self, name):
         self._name = name

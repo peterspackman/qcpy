@@ -20,7 +20,7 @@ class GaussianJob(GeometryJob, InputFileJob):
     _command = 'echo'
     _input_file = 'input.gjf'
 
-    def __init__(self, geometry, basis_set="3-21G", method="HF", command='/Users/prs/bin/g09/g09'):
+    def __init__(self, geometry, basis_set="3-21G", method="HF", command='g09'):
         self._geometry = geometry
         self._method = method
         self._basis_set_name = basis_set
@@ -34,7 +34,7 @@ class GaussianJob(GeometryJob, InputFileJob):
     @property
     def command(self):
         """What is the current 'command' e.g. /bin/g09"""
-        return self._command
+        return [self._command, self._input_file]
 
     @property
     def default_basename(self):
@@ -52,6 +52,14 @@ class GaussianJob(GeometryJob, InputFileJob):
 
     def post_process(self):
         raise NotImplementedError
+
+    @property
+    def basis_set(self):
+        return self._basis_set_name
+
+    @property
+    def method(self):
+        return self._method
 
 
 class GaussianWaveFunctionJob(GaussianJob):

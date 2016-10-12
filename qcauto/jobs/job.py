@@ -10,8 +10,8 @@ class Job(object):
     _has_dependencies = False
     _requires_postprocessing = False
     _working_directory = None
-    _requires_shell = True
-    _capture_stdout = True
+    _requires_shell = False
+    _capture_stdout = False
     _stdout = ""
     _stderr = ""
 
@@ -55,6 +55,12 @@ class Job(object):
     def set_name(self, name):
         """ Change the name of the job. """
         self._name = name
+    
+    def __str__(self):
+        return "{}: {}".format(self.__class__.__name__, self.name)
+
+    def __repr__(self):
+        return str(self)
 
 
 class InputFileJob(Job):
