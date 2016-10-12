@@ -10,6 +10,14 @@ class FileFormatError(Exception):
         self.message = message
 
     def __str__(self):
-        return "Error reading '{}'\nLine {}: {}".format(self.fname,
-                                                        self.line,
-                                                        self.message)
+        return "error reading {}, line {}: {}".format(self.fname,
+                                                      self.line,
+                                                      self.message)
+
+class LineFormatError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return "while parsing line encountered {}".format(self.message)
+   

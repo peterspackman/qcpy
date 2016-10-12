@@ -33,3 +33,9 @@ class Atom:
     def covalent_radius(self):
         """This atom's covalent radius in angstroms"""
         return self.element.covalent_radius
+
+    def __str__(self):
+        return "{}: {}".format(self.element, self.center)
+
+    def __repr__(self):
+        return str(self) 

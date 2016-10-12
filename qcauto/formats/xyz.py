@@ -6,7 +6,7 @@ import logging
 
 from qcauto.atom import Atom
 from qcauto.coordinates import Coordinates
-from qcauto.formats import FileFormatError
+from qcauto.formats import FileFormatError, LineFormatError
 
 LOG = logging.getLogger(__name__)
 
@@ -17,7 +17,6 @@ class XYZFile:
     number_of_atoms = 0
     filename = ""
     comment = ""
-    _current_line = 0
 
     def __init__(self, path):
         if not isinstance(path, Path):
@@ -25,24 +24,39 @@ class XYZFile:
         self.filename = path.name
 
         with path.open('r') as xyz_file:
-            # Read number of atoms from line 1
-            self.number_of_atoms = int(xyz_file.readline())
-            self._current_line += 1
-            # Read comment from line 2
-            self.comment = xyz_file.readline()
-            self._current_line += 1
-            for i, line in enumerate(xyz_file.readlines()):
-                self._current_line += 1
+            self.atoms, self.comment = XYZFile.parse_lines(xyz_file.readlines())
+
+    @staticmethod
+    def parse_lines(lines, filename="lines"):
+        """
+        Parse a .xyz file line by line, returning a list of Atom and the comment string
+        >>> XYZFile.parse_lines(['1', 'this is a comment line', "H 0.0 0.0 0.0"])
+        ([H: [ 0.  0.  0.]], 'this is a comment line')
+        """
+        number_of_atoms = 0
+        current_line = 0
+        comment = ""
+        atoms = []
+        for i, line in enumerate(lines, 1):
+            current_line = i
+            if i == 1:
+                number_of_atoms = int(line)
+            elif i == 2:
+                comment = line
+            else:
                 try:
-                    if i >= self.number_of_atoms:
-                        raise FileFormatError(self.filename,
-                                              self._current_line,
-                                              "Too many atoms in file")
-                    atom = self._parse_atom_line(line)
-                except(FileFormatError) as file_error:
-                    LOG.error(file_error)
-                    return
-                self.atoms.append(atom)
+                    atom = parse_atom_line(line)
+                    atoms.append(atom)
+                except(LineFormatError) as file_error:
+                    raise FileFormatError(filename, current_line, file_error)
+        if not len(atoms) == number_of_atoms:
+            raise FileFormatError(filename,
+                                  current_line,
+                                  "incorrect number of atom lines (found {}, expected {})".format(
+                                      len(atoms), number_of_atoms))
+
+        return atoms, comment
+
 
     def __iter__(self):
         return iter(self.atoms)
@@ -50,16 +64,22 @@ class XYZFile:
     def __str__(self):
         return "XYZFile: {{{}}}".format(str(self.atoms))
 
-    def _parse_atom_line(self, line):
-        tokens = line.split()
-        if len(tokens) > 4:
-            msg = "Too many tokens on line ({})"
-            raise FileFormatError(self.filename, self._current_line, msg)
-        center = float(tokens[1]), float(tokens[2]), float(tokens[3])
 
-        try:
-            atom = Atom.from_symbol_and_location(tokens[0], Coordinates(*center))
-        except KeyError:
-            msg = "Unknown atomic symbol: {}".format(tokens[0])
-            raise FileFormatError(self.filename, self._current_line, msg)
-        return atom
+def parse_atom_line(line, sep=" "):
+    """ Parse a single line specifying an atom and its location
+    >>> parse_atom_line("H 0.0 0.0 0.0")
+    H: [ 0.  0.  0.]
+    >>> parse_atom_line("C, 1.5, 3.2, 5", sep=", ")
+    C: [ 1.5  3.2  5. ]
+    """
+    tokens = line.split(sep)
+    if not len(tokens) == 4:
+        msg = "incorrect number of tokens (found {}, expected {})".format(len(tokens), 4)
+        raise LineFormatError(msg)
+    center = float(tokens[1]), float(tokens[2]), float(tokens[3])
+
+    try:
+        atom = Atom.from_symbol_and_location(tokens[0], Coordinates(*center))
+    except KeyError as key_error:
+        raise LineFormatError(key_error)
+    return atom
