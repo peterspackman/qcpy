@@ -3,6 +3,7 @@ All gaussian (g09) job classes
 """
 import logging
 from qcauto.templates import GaussianSinglePointEnergy, GaussianWaveFunction
+from qcauto.formats.gaussian import G09LogFile
 from .job import GeometryJob, InputFileJob
 
 LOG = logging.getLogger(__name__)
@@ -85,6 +86,6 @@ class GaussianSinglePointEnergyJob(GaussianJob):
     _template = GaussianSinglePointEnergy
 
     def post_process(self):
-        raise NotImplementedError
-
+        log_file = G09LogFile(self.output_file)
+        self._result = log_file.scf_energy
 

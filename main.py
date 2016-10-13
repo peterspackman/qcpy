@@ -23,8 +23,8 @@ def main():
             job.set_name(name)
             runner.add_job(job)
 
-    for job in runner.run():
-        print(job)
+    for job, exit_status in runner.run():
+        print(job.name, job.method, job.basis_set, job.result)
 
 if __name__ == '__main__':
     main()

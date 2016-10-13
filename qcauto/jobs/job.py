@@ -1,7 +1,10 @@
+"""
+Abstract base classes for Jobs
+"""
 import logging
 import os
 from qcauto.templates import EmptyTemplate
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 class Job(object):
@@ -14,17 +17,30 @@ class Job(object):
     _capture_stdout = False
     _stdout = ""
     _stderr = ""
+    _result = None
+
+    def set_working_directory(self, dirname):
+        """"Set the working directory for this job"""
+        assert os.path.isdir(dirname)
+        self._working_directory = dirname
 
     @property
     def working_directory(self):
+        """Return the current working directory for this job"""
         return self._working_directory
 
     @property
+    def result(self):
+        return self._result
+
+    @property
     def stdout(self):
+        """Return the output to stdout for this job"""
         return self._stdout
 
     @property
     def capture_stdout(self):
+        """Should this job capture what is written to stdout?"""
         return self._capture_stdout
 
     @property
@@ -55,7 +71,7 @@ class Job(object):
     def set_name(self, name):
         """ Change the name of the job. """
         self._name = name
-    
+
     def __str__(self):
         return "{}: {}".format(self.__class__.__name__, self.name)
 
@@ -72,15 +88,13 @@ class InputFileJob(Job):
 
     @property
     def input_filename(self):
+        """What is the filename of the input file for this job?"""
         return self._input_filename
 
     @property
     def output_file(self):
+        """What is the filename for the output file for this job?"""
         return self._output_file
-
-    def set_working_directory(self, dirname):
-        assert os.path.isdir(dirname)
-        self._working_directory = dirname
 
     def render(self, **kwargs):
         """ Render the input file template.
@@ -106,3 +120,9 @@ class GeometryJob(Job):
     def geometry(self):
         """ The Geometry object for this job."""
         return self._geometry
+
+    def resolve_dependencies(self):
+        pass
+
+    def post_process(self):
+        pass

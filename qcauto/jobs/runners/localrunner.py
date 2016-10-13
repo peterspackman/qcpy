@@ -1,15 +1,18 @@
+"""
+Run jobs on a local machine
+"""
 import logging
+import subprocess
 from .nullrunner import NullRunner
 from qcauto.utils import working_directory
-import subprocess
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 class LocalRunner(NullRunner):
     """ Currently totally sequential """
 
     def run_job(self, job):
-        log.debug('Starting {} '.format(job.name))
+        LOG.debug('Starting %s', job.name)
         with working_directory(job.working_directory):
             kwargs = {
                 'shell': job._requires_shell,
@@ -23,4 +26,6 @@ class LocalRunner(NullRunner):
                 job.resolve_dependencies()
             completed = subprocess.run(job.command, **kwargs)
             job._stdout = completed.stdout if job.capture_stdout else ""
+            if job.requires_postprocessing:
+                job.post_process()
         return completed.returncode == 0

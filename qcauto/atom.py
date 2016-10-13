@@ -38,4 +38,4 @@ class Atom:
         return "{}: {}".format(self.element, self.center)
 
     def __repr__(self):
-        return str(self) 
+        return str(self)
