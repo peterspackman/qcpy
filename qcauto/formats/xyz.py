@@ -24,7 +24,8 @@ class XYZFile:
         self.filename = path.name
 
         with path.open('r') as xyz_file:
-            self.atoms, self.comment = XYZFile.parse_lines(xyz_file.readlines())
+            self.atoms, self.comment = XYZFile.parse_lines(xyz_file.readlines(),
+                                                           filename=self.filename)
 
     @staticmethod
     def parse_lines(lines, filename="lines"):
@@ -65,14 +66,14 @@ class XYZFile:
         return "XYZFile: {{{}}}".format(str(self.atoms))
 
 
-def parse_atom_line(line, sep=" "):
+def parse_atom_line(line, **kwargs):
     """ Parse a single line specifying an atom and its location
     >>> parse_atom_line("H 0.0 0.0 0.0")
     H: [ 0.  0.  0.]
     >>> parse_atom_line("C, 1.5, 3.2, 5", sep=", ")
     C: [ 1.5  3.2  5. ]
     """
-    tokens = line.split(sep)
+    tokens = line.split(**kwargs)
     if not len(tokens) == 4:
         msg = "incorrect number of tokens (found {}, expected {})".format(len(tokens), 4)
         raise LineFormatError(msg)

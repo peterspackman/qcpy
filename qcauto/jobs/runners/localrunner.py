@@ -10,10 +10,11 @@ LOG = logging.getLogger(__name__)
 
 class LocalRunner(NullRunner):
     """ Currently totally sequential """
+    create_working_directories = True
 
     def run_job(self, job):
         LOG.debug('Starting %s', job.name)
-        with working_directory(job.working_directory):
+        with working_directory(job.working_directory, create=True):
             kwargs = {
                 'shell': job._requires_shell,
                 'universal_newlines': True,

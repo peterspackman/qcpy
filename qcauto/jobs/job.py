@@ -21,7 +21,6 @@ class Job(object):
 
     def set_working_directory(self, dirname):
         """"Set the working directory for this job"""
-        assert os.path.isdir(dirname)
         self._working_directory = dirname
 
     @property
