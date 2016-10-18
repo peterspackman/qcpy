@@ -9,6 +9,11 @@
 A simple library to automate creation (and execution) of quantum 
 chemistry jobs. Generic enough to handle all kinds of things.
 
+### Installing
+Requires python 3.5.
+
+```pip install https://github.com/peterspackman/qcpy/archive/master.zip```
+
 ### How:
 
 The library is populated by the following basic structures:
