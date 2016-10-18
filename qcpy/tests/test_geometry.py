@@ -2,10 +2,10 @@
 Geometry tests
 """
 from unittest import TestCase
-from qcauto.element import O, H
-from qcauto.atom import Atom
-from qcauto.coordinates import Coordinates
-from qcauto.geometry import Geometry
+from qcpy.element import O, H
+from qcpy.atom import Atom
+from qcpy.coordinates import Coordinates
+from qcpy.geometry import Geometry
 
 H2O = Geometry(atoms=[
     Atom(O, center=Coordinates(0.0, 0.0, 0.11779)),

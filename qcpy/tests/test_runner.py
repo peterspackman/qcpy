@@ -1,5 +1,5 @@
-from qcauto.jobs.runners import LocalRunner
-from qcauto.jobs.job import Job
+from qcpy.jobs.runners import LocalRunner
+from qcpy.jobs.job import Job
 from unittest import TestCase
 
 

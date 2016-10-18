@@ -4,7 +4,7 @@ Run jobs on a local machine
 import logging
 import subprocess
 
-from qcauto.utils import working_directory
+from qcpy.utils import working_directory
 
 from .nullrunner import NullRunner
 

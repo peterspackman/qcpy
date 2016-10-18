@@ -2,9 +2,9 @@
 import argparse
 import logging
 from pathlib import Path
-from qcauto.jobs import GaussianSinglePointEnergyJob as GaussianJob
-from qcauto.jobs.runners import LocalRunner
-from qcauto.geometry import Geometry
+from qcpy.jobs import GaussianSinglePointEnergyJob as GaussianJob
+from qcpy.jobs.runners import LocalRunner
+from qcpy.geometry import Geometry
 
 log = logging.getLogger('main')
 

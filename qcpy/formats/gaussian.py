@@ -3,7 +3,7 @@ Contains class/methods to extract data from a g09 log file
 """
 from pathlib import Path
 import logging
-from qcauto.formats import FileFormatError, LineFormatError
+from qcpy.formats import FileFormatError, LineFormatError
 
 LOG = logging.getLogger(__name__)
 

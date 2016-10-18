@@ -5,9 +5,9 @@ from collections import Counter
 import logging
 from typing import List
 
-from qcauto.atom import Atom
-from qcauto.element import Element
-from qcauto.formats.xyz import XYZFile
+from qcpy.atom import Atom
+from qcpy.element import Element
+from qcpy.formats.xyz import XYZFile
 
 LOG = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 from unittest import TestCase
-from qcauto.jobs.job import *
-from qcauto.jobs import GaussianSinglePointEnergyJob, TontoRobyBondIndexJob
+from qcpy.jobs.job import *
+from qcpy.jobs import GaussianSinglePointEnergyJob, TontoRobyBondIndexJob
 from .test_geometry import H2O
 
 
