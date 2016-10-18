@@ -19,37 +19,38 @@ class Job(object):
     _stderr = ""
     _result = None
 
-    def set_working_directory(self, dirname):
+    def set_working_directory(self, dirname: str):
         """"Set the working directory for this job"""
         self._working_directory = dirname
 
     @property
-    def working_directory(self):
+    def working_directory(self) -> str:
         """Return the current working directory for this job"""
         return self._working_directory
 
     @property
     def result(self):
+        """Return the result of this calculation (varies)"""
         return self._result
 
     @property
-    def stdout(self):
+    def stdout(self) -> str:
         """Return the output to stdout for this job"""
         return self._stdout
 
     @property
-    def capture_stdout(self):
+    def capture_stdout(self) -> bool:
         """Should this job capture what is written to stdout?"""
         return self._capture_stdout
 
     @property
-    def has_dependencies(self):
+    def has_dependencies(self) -> bool:
         """ Does this job require some work before it
         can be run?"""
         return self._has_dependencies
 
     @property
-    def requires_postprocessing(self):
+    def requires_postprocessing(self) -> bool:
         """ Does this job require some work after running? """
         return self._requires_postprocessing
 
@@ -63,11 +64,11 @@ class Job(object):
         raise NotImplementedError
 
     @property
-    def name(self):
+    def name(self) -> str:
         """ The name of the job as a string."""
         return self._name
 
-    def set_name(self, name):
+    def set_name(self, name: str):
         """ Change the name of the job. """
         self._name = name
 
@@ -86,12 +87,12 @@ class InputFileJob(Job):
     _has_dependencies = True
 
     @property
-    def input_filename(self):
+    def input_filename(self) -> str:
         """What is the filename of the input file for this job?"""
         return self._input_filename
 
     @property
-    def output_file(self):
+    def output_file(self) -> str:
         """What is the filename for the output file for this job?"""
         return self._output_file
 

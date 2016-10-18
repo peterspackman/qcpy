@@ -3,7 +3,7 @@
 {{job.name}}
 
 {{geom.charge}} {{geom.multiplicity}}
-{%- for line in geom.as_lines(format="g09") %}
+{%- for line in geom.as_lines(line_format="g09") %}
 {{ '%s' | format(line)}}
 {%- endfor %}
 {{'\n'}}

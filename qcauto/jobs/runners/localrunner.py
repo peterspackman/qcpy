@@ -3,8 +3,11 @@ Run jobs on a local machine
 """
 import logging
 import subprocess
-from .nullrunner import NullRunner
+
 from qcauto.utils import working_directory
+
+from .nullrunner import NullRunner
+
 LOG = logging.getLogger(__name__)
 
 

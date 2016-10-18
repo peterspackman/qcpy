@@ -15,7 +15,7 @@ class TontoJob(InputFileJob):
     _requires_postprocessing = True
     _template = DFT
 
-    def write_input_file(self, filename):
+    def write_input_file(self, filename: str):
         LOG.debug("Writing input file to %s", filename)
         with open(filename, 'w') as input_file:
             input_file.write(self._template.render(job=self))
@@ -37,7 +37,7 @@ class TontoRobyBondIndexJob(TontoJob):
     _template = Roby
 
     @property
-    def fchk_filename(self):
+    def fchk_filename(self) -> str:
         """Returns the fchk filename for this job"""
         return self._fchk_filename
 

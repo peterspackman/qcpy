@@ -7,8 +7,8 @@ setup(name='qcauto',
       author='Peter Spackman',
       license='GPLv3',
       packages=['qcauto'],
-      install_requires=['numpy', 'attrs', 'jinja2'],
+      install_requires=['numpy', 'jinja2'],
       zip_safe=False,
       test_suite='nose.collector',
       tests_require=['nose']
-      )
+)
