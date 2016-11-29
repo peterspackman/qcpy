@@ -5,7 +5,13 @@ from qcpy.element import periodictable
 
 
 class Atom:
-    """TODO Atom documentation"""
+    """An atom consists of a position in 3D space, and an element type
+    >>> a = Atom.from_symbol_and_location('H', [0, 0, 0])
+    >>> a
+    H: [0, 0, 0]
+    >>> a.covalent_radius
+    0.23
+    """
     _element = None
     _center = None
 
