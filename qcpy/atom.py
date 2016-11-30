@@ -1,7 +1,7 @@
 """
 Store all the desired info about an atom in a molecule etc
 """
-from qcpy.element import periodictable
+from .element import periodictable
 
 
 class Atom:

@@ -3,7 +3,7 @@ Abstract base classes for Jobs
 """
 import logging
 
-from qcpy.templates import EmptyTemplate
+from ..templates import EmptyTemplate
 
 LOG = logging.getLogger(__name__)
 

@@ -4,9 +4,9 @@
 from pathlib import Path
 import logging
 
-from qcpy.atom import Atom
-from qcpy.coordinates import Coordinates
-from qcpy.formats import FileFormatError, LineFormatError
+from ..atom import Atom
+from ..coordinates import Coordinates
+from . import FileFormatError, LineFormatError
 
 LOG = logging.getLogger(__name__)
 

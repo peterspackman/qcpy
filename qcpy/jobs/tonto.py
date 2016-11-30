@@ -1,7 +1,7 @@
 """All tonto job classes"""
 import logging
-from qcpy.templates import TontoRobyBondIndex as Roby
-from qcpy.templates import TontoDFTSinglePointEnergy as DFT
+from ..templates import TontoRobyBondIndex as Roby
+from ..templates import TontoDFTSinglePointEnergy as DFT
 from .job import InputFileJob
 LOG = logging.getLogger(__name__)
 

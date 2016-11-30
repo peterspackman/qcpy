@@ -2,8 +2,8 @@
 All gaussian (g09) job classes
 """
 import logging
-from qcpy.templates import GaussianSinglePointEnergy, GaussianWaveFunction
-from qcpy.formats.gaussian import G09LogFile
+from ..templates import GaussianSinglePointEnergy, GaussianWaveFunction
+from ..formats.gaussian import G09LogFile
 from .job import GeometryJob, InputFileJob
 
 LOG = logging.getLogger(__name__)
