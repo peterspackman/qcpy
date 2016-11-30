@@ -41,7 +41,7 @@ class Element:
     
     @property
     def mass(self):
-        return self._vdw
+        return self._m
     
     def __repr__(self):
         return self.symbol
@@ -61,6 +61,8 @@ class PeriodicTable:
     H
     >>> h.covalent_radius
     0.23
+    >>> h.mass
+    1.00794
     >>> h == table['H']
     True
     >>> h == table.hydrogen
