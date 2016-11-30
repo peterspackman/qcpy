@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='qcpy',
       version='0.1.1',
@@ -17,7 +17,7 @@ setup(name='qcpy',
           'Topic :: Software Development :: Libraries :: Python Modules',
           ],
       license='GPLv3',
-      packages=['qcpy'],
+      packages=find_packages(),
       install_requires=['numpy', 'jinja2'],
       zip_safe=False,
       test_suite='nose.collector',
