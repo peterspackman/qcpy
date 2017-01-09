@@ -18,6 +18,9 @@ setup(name='qcpy',
           ],
       license='GPLv3',
       packages=find_packages(),
+      package_data={
+         'qcpy.templates': ['*.template']  # include all templates
+      },
       install_requires=['numpy', 'jinja2'],
       zip_safe=False,
       test_suite='nose.collector',
