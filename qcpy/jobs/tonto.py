@@ -1,19 +1,57 @@
 """All tonto job classes"""
 import logging
 from ..templates import TontoRobyBondIndex as Roby
-from ..templates import TontoDFTSinglePointEnergy as DFT
-from .job import InputFileJob
+from ..templates import TontoSCF as SCF
+from .job import GeometryJob, InputFileJob
 LOG = logging.getLogger(__name__)
 
+def kwdict_to_string(d, prefix=''): 
+    lines = []
+    for key, value in d.items():
+        if value is None:
+            lines.append('{}{}'.format(prefix, key))
+        else:
+            if isinstance(value, dict):
+                lines.append('{}{}= {{'.format(prefix, key))
+                lines.append(kwdict_to_string(value, prefix=prefix+'  '))
+                lines.append('{}}}'.format(prefix))
+            else:
+                lines.append('{}{}= {}'.format(prefix, key, value))
+    return '\n'.join(lines)
 
-class TontoJob(InputFileJob):
+
+class TontoJob(GeometryJob, InputFileJob):
     """ Abstract base class for tonto jobs"""
     _basis_set = "3-21G"
     _method = "RHF"
     _name = "tonto_job"
     _has_dependencies = True
     _requires_postprocessing = True
-    _template = DFT
+    _basis_directory = None
+    _template = SCF
+
+    _scf_keywords = {
+        'scfdata': {
+            'initial_density': 'promolecule',
+            'kind': 'rhf',
+            'direct': 'on',
+            'convergence': 0.00001,
+            'diis': { 'convergence_tolerance': 0.00001},
+            'output': 'NO',
+            'output_results': 'YES'
+        },
+        'scf': None,
+        'delete_scf_archives': None,
+    }
+
+    _output_keywords = {}
+
+    def __init__(self, geometry, basis_set="3-21G", method="HF", command='tonto'):
+        self._geometry = geometry
+        self._method = method
+        self._basis_set_name = basis_set
+        self._command = command
+
 
     def write_input_file(self, filename: str):
         LOG.debug("Writing input file to %s", filename)
@@ -23,6 +61,24 @@ class TontoJob(InputFileJob):
     def resolve_dependencies(self):
         LOG.debug("Resolving dependencies for tonto job %s", self.name)
         self.write_input_file(self.input_filename)
+
+    @property
+    def charge(self):
+        return self._charge
+
+    @property
+    def multiplicity(self):
+        return self._multiplicity
+
+    @property
+    def basis_name(self):
+        return self._basis_set_name
+
+    def scf_block_string(self):
+        return kwdict_to_string(self._scf_keywords)
+
+    def output_block_string(self):
+        return kwdict_to_string(self._output_keywords)
 
     def read_output_file(self, filename):
         pass

@@ -1,0 +1,7 @@
+{
+name= {{job.name}}
+{% block preamble_block %} {% endblock %}
+{% block atom_block %} {% endblock %}
+{% block scf_block %} {% endblock %}
+{% block output_block %} {% endblock %}
+}

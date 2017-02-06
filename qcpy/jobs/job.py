@@ -118,6 +118,7 @@ class GeometryJob(Job):
     """ Abstract base class of job requiring a geometry."""
     _geometry = None
 
+    @property
     def geometry(self):
         """ The Geometry object for this job."""
         return self._geometry

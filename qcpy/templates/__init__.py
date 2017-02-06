@@ -7,14 +7,14 @@ LOG = logging.getLogger(__name__)
 _ENV = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__))))
 
 GaussianSinglePointEnergy = _ENV.get_template('gaussian_spe.template')
-TontoDFTSinglePointEnergy = _ENV.get_template('tonto_dft.template')
+TontoSCF = _ENV.get_template('tonto_scf.template')
 TontoRobyBondIndex = _ENV.get_template('tonto_roby.template')
 GaussianWaveFunction = _ENV.get_template('gaussian_wave.template')
 EmptyTemplate = _ENV.get_template('empty.template')
 
 _ALL_TEMPLATES = {
         'gaussian_spe': GaussianSinglePointEnergy,
-        'tonto_dft_spe': TontoDFTSinglePointEnergy,
+        'tonto_scf': TontoSCF,
         'tonto_roby': TontoRobyBondIndex,
         'gaussian_wfn': GaussianWaveFunction,
         'empty': EmptyTemplate,

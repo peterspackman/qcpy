@@ -1,0 +1,30 @@
+{% extends 'tonto.template' %}
+{% block preamble_block %}
+{% if output_precision %}
+output_style_options= {
+  real_precision= {{output_precision}}
+}
+{% endif %}
+{% if job.basis_directory %}
+basis_directory= {{job.basis_directory}}
+{% endif %}
+basis_name= {{job.basis_name}}
+charge=   {{job.geometry.charge}}
+multiplicity= {{job.geometry.multiplicity}}
+{% endblock %}
+{% block atom_block %}
+atoms= {
+  keys= { label= { units= angstrom } pos= }
+  data= {
+    {%- for line in job.geometry.as_lines(line_format="g09") %}
+    {{ '%s' | format(line)}}
+    {%- endfor %}
+  }
+}
+{% endblock %}
+{% block scf_block %}
+{{job.scf_block_string()}}
+{% endblock %}
+{% block output_block %}
+{{job.output_block_string()}}
+{% endblock %}

@@ -1,6 +1,6 @@
 from unittest import TestCase
 from qcpy.jobs.job import *
-from qcpy.jobs import GaussianSinglePointEnergyJob, TontoRobyBondIndexJob
+from qcpy.jobs import GaussianSinglePointEnergyJob, TontoJob
 from .test_geometry import H2O
 
 
@@ -23,9 +23,10 @@ class JobCommon:
         assert self.name == self.job.name
 
 
-class TestTontoRobyBondIndexJob(JobCommon, TestCase):
-    _name = "tonto_dft_job"
-    _job = TontoRobyBondIndexJob()
+class TestTontoJob(JobCommon, TestCase):
+    _name = "tonto_scf_job"
+    _geometry = H2O
+    _job = TontoJob(_geometry)
 
     def test_dependencies_exist(self):
         assert self.job.has_dependencies
