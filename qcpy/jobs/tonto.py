@@ -2,7 +2,8 @@
 import logging
 from ..templates import TontoRobyBondIndex as Roby
 from ..templates import TontoSCF as SCF
-from .job import GeometryJob, InputFileJob
+from ..formats.tonto_output import TontoOutputFile
+from .job import GeometryJob, InputFileJob, InvalidBasisSetName
 LOG = logging.getLogger(__name__)
 
 def kwdict_to_string(d, prefix=''): 
@@ -21,7 +22,7 @@ def kwdict_to_string(d, prefix=''):
 
 
 class TontoJob(GeometryJob, InputFileJob):
-    """ Abstract base class for tonto jobs"""
+    """Abstract base class for tonto jobs"""
     _basis_set = "3-21G"
     _method = "RHF"
     _name = "tonto_job"
@@ -29,6 +30,16 @@ class TontoJob(GeometryJob, InputFileJob):
     _requires_postprocessing = True
     _basis_directory = None
     _template = SCF
+    _available_basis_sets = [
+       '3-21G', '6-311++G(2d,2p)', '6-311G(d,p)',
+       '6-31G(d)', '6-31G(d,p)', 'Clementi-Roetti',
+       'Coppens', 'DZP', 'DZP-DKH', 'STO-3G', 'Sadlej+',
+       'Sadlej-PVTZ', 'Spackman-DZP+', 'TZP-DKH', 'Thakkar',
+       'VTZ-Ahlrichs', 'ahlrichs-polarization', 'aug-cc-pVDZ',
+       'aug-cc-pVQZ', 'aug-cc-pVTZ', 'cc-pVDZ', 'cc-pVQZ',
+       'cc-pVTZ', 'def2-SV(P)', 'def2-SVP', 'def2-TZVP',
+       'def2-TZVPP', 'pVDZ-Ahlrichs', 'vanLenthe-Baerends'
+    ]
 
     _scf_keywords = {
         'scfdata': {
@@ -49,7 +60,7 @@ class TontoJob(GeometryJob, InputFileJob):
     def __init__(self, geometry, basis_set="3-21G", method="HF", command='tonto'):
         self._geometry = geometry
         self._method = method
-        self._basis_set_name = basis_set
+        self._basis_set = basis_set
         self._command = command
 
 
@@ -63,16 +74,18 @@ class TontoJob(GeometryJob, InputFileJob):
         self.write_input_file(self.input_filename)
 
     @property
-    def charge(self):
-        return self._charge
+    def basis_set(self):
+        return self._basis_set
+
+    def set_basis_set(self, basis_set):
+        if not basis_set in self.available_basis_sets:
+            raise InvalidBasisSetName(
+                    "No such basis in tonto: {}".format(basis_set))
+        self._basis_set = basis_set
 
     @property
-    def multiplicity(self):
-        return self._multiplicity
-
-    @property
-    def basis_name(self):
-        return self._basis_set_name
+    def available_basis_sets(self):
+        return self._available_basis_sets
 
     def scf_block_string(self):
         return kwdict_to_string(self._scf_keywords)
@@ -81,7 +94,8 @@ class TontoJob(GeometryJob, InputFileJob):
         return kwdict_to_string(self._output_keywords)
 
     def read_output_file(self, filename):
-        pass
+        of = TontoOutputFile(filename)
+        return of.structured_contents
 
     def post_process(self):
         pass
@@ -94,8 +108,18 @@ class TontoRobyBondIndexJob(TontoJob):
 
     @property
     def fchk_filename(self) -> str:
-        """Returns the fchk filename for this job"""
+        """Returns the fchk filename for this job
+
+        >>> from qcpy.tests.test_geometry import H2O
+        >>> job = TontoRobyBondIndexJob(H2O)
+        >>> job.fchk_filename
+        'wavefunction.fchk'
+        """
         return self._fchk_filename
+
+    def set_fchck_filename(self, filename):
+        """Sets the fchk filename for this job"""
+        self._fchk_filename = filename
 
     def resolve_dependencies(self):
         import os

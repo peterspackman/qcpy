@@ -19,8 +19,9 @@ class JobCommon:
         return self._geometry
 
     def test_set_name_should_update_name(self):
+        """set_name propagates correctly"""
         self.job.set_name(self.name)
-        assert self.name == self.job.name
+        self.assertEqual(self.name, self.job.name)
 
 
 class TestTontoJob(JobCommon, TestCase):
@@ -29,7 +30,20 @@ class TestTontoJob(JobCommon, TestCase):
     _job = TontoJob(_geometry)
 
     def test_dependencies_exist(self):
-        assert self.job.has_dependencies
+        """tonto jobs depend on input files"""
+        self.assertTrue(self.job.has_dependencies)
+
+    def test_set_basis_set(self):
+        """tonto set valid basis set"""
+        valid_basis = 'cc-pVDZ'
+        self.job.set_basis_set(valid_basis)
+        self.assertEqual(self.job.basis_set, valid_basis)
+
+    def test_set_basis_set_raises(self):
+        """tonto set invalid basis set raises exception"""
+        invalid_basis = 'cc-pV6Z'
+        with self.assertRaises(InvalidBasisSetName):
+            self.job.set_basis_set(invalid_basis)
 
 
 class TestGaussianSinglePointEnergyJob(JobCommon, TestCase):
@@ -38,4 +52,5 @@ class TestGaussianSinglePointEnergyJob(JobCommon, TestCase):
     _job = GaussianSinglePointEnergyJob(_geometry)
 
     def test_dependencies_exist(self):
-        assert self.job.has_dependencies
+        """g09 jobs depend on input file"""
+        self.assertTrue(self.job.has_dependencies)

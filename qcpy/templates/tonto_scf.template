@@ -8,7 +8,7 @@ output_style_options= {
 {% if job.basis_directory %}
 basis_directory= {{job.basis_directory}}
 {% endif %}
-basis_name= {{job.basis_name}}
+basis_name= {{job.basis_set}}
 charge=   {{job.geometry.charge}}
 multiplicity= {{job.geometry.multiplicity}}
 {% endblock %}

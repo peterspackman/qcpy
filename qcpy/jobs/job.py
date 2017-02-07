@@ -5,6 +5,9 @@ import logging
 
 from ..templates import EmptyTemplate
 
+class InvalidBasisSetName(Exception):
+    pass
+
 LOG = logging.getLogger(__name__)
 
 

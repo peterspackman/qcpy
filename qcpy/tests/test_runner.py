@@ -21,6 +21,7 @@ class TestEchoJob(TestCase):
     runner = LocalRunner()
 
     def test_jobs_run(self):
+        """LocalRunner works for echo jobs"""
         self.runner.add_jobs(self.jobs)
         for job, status in self.runner.run():
             assert status == True

@@ -19,15 +19,16 @@ class TestGeometry(TestCase):
     geom = H2O
 
     def test_elements(self):
-        """Check that the elements are correct"""
-        assert self.geom.elements == [O, H, H]
+        """Geometry elements"""
+        self.assertEqual(self.geom.elements, [O, H, H])
 
     def test_molecular_formula(self):
-        """Check that the calculated molecular formula is correct"""
-        assert self.geom.molecular_formula == "H2O"
+        """Calculated molecular formula"""
+        self.assertEqual(self.geom.molecular_formula, "H2O")
 
     def test_as_lines(self):
-        """Check output as lines"""
-        assert self.geom.as_lines() == ["O    0.0000000   0.0000000   0.1177900",
-                                        "H    0.0000000   0.7554530  -0.4711610",
-                                        "H    0.0000000  -0.7554530  -0.4711610"]
+        """Render geometry as text lines"""
+        self.assertEqual(self.geom.as_lines(),
+                        ["O    0.0000000   0.0000000   0.1177900",
+                         "H    0.0000000   0.7554530  -0.4711610",
+                         "H    0.0000000  -0.7554530  -0.4711610"])
