@@ -6,17 +6,13 @@ from jinja2 import Environment, FileSystemLoader, Template
 LOG = logging.getLogger(__name__)
 _ENV = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__))))
 
-GaussianSinglePointEnergy = _ENV.get_template('gaussian_spe.template')
+GaussianSCF = _ENV.get_template('gaussian_scf.template')
 TontoSCF = _ENV.get_template('tonto_scf.template')
-TontoRobyBondIndex = _ENV.get_template('tonto_roby.template')
-GaussianWaveFunction = _ENV.get_template('gaussian_wave.template')
 EmptyTemplate = _ENV.get_template('empty.template')
 
 _ALL_TEMPLATES = {
-        'gaussian_spe': GaussianSinglePointEnergy,
+        'gaussian_scf': GaussianSCF,
         'tonto_scf': TontoSCF,
-        'tonto_roby': TontoRobyBondIndex,
-        'gaussian_wfn': GaussianWaveFunction,
         'empty': EmptyTemplate,
 }
 

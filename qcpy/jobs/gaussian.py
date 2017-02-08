@@ -2,7 +2,7 @@
 All gaussian (g09) job classes
 """
 import logging
-from ..templates import GaussianSinglePointEnergy, GaussianWaveFunction
+from ..templates import GaussianSCF as SCF
 from ..formats.gaussian import G09LogFile
 from .job import GeometryJob, InputFileJob
 
@@ -11,9 +11,26 @@ LOG = logging.getLogger(__name__)
 
 class GaussianJob(GeometryJob, InputFileJob):
     """Base class for all g09 jobs"""
-    _basis_set_name = "3-21G"
-    _method = "HF"
-    _name = "gaussian_job"
+    params = {
+        'kind': 'scf',
+        'basis_set': '6-31G',
+        'method': 'hf',
+        'name': 'g09_job',
+        'template': SCF,
+        'basis directory': None,
+    }
+
+    _available_basis_sets = [
+       '3-21G', '6-311++G(2d,2p)', '6-311G(d,p)',
+       '6-31G(d)', '6-31G(d,p)', 'Clementi-Roetti',
+       'Coppens', 'DZP', 'DZP-DKH', 'STO-3G', 'Sadlej+',
+       'Sadlej-PVTZ', 'Spackman-DZP+', 'TZP-DKH', 'Thakkar',
+       'VTZ-Ahlrichs', 'ahlrichs-polarization', 'aug-cc-pVDZ',
+       'aug-cc-pVQZ', 'aug-cc-pVTZ', 'cc-pVDZ', 'cc-pVQZ',
+       'cc-pVTZ', 'def2-SV(P)', 'def2-SVP', 'def2-TZVP',
+       'def2-TZVPP', 'pVDZ-Ahlrichs', 'vanLenthe-Baerends'
+    ]
+
     _input_ext = '.gjf'
     _output_ext = '.log'
     _has_dependencies = True
@@ -21,16 +38,13 @@ class GaussianJob(GeometryJob, InputFileJob):
     _command = 'echo'
     _input_file = 'input.gjf'
 
-    def __init__(self, geometry, basis_set="3-21G", method="HF", command='g09'):
-        self._geometry = geometry
-        self._method = method
-        self._basis_set_name = basis_set
-        self._command = command
+    def __init__(self, **kwargs):
+        self.params.update(kwargs)
 
     def write_input_file(self, filename):
         LOG.debug("Writing input file to %s", filename)
         with open(filename, 'w') as input_file:
-            input_file.write(self.render(job=self, geom=self.geometry()))
+            input_file.write(self.render(params=self.params))
 
     @property
     def command(self):
@@ -61,31 +75,3 @@ class GaussianJob(GeometryJob, InputFileJob):
     @property
     def method(self):
         return self._method
-
-
-class GaussianWaveFunctionJob(GaussianJob):
-    """Base class for all g09 wavefunction jobs"""
-    _template = GaussianWaveFunction
-    _fchk_filename = "wavefunction"
-
-    @property
-    def fchk_filename(self):
-        """Return the filename of the output fchk file i.e. the wavefunction file"""
-        return self._fchk_filename
-
-    def set_fchk_filename(self, filename):
-        """Set the wavefunction file name"""
-        self._fchk_filename = filename
-
-    def post_process(self):
-        raise NotImplementedError
-
-
-class GaussianSinglePointEnergyJob(GaussianJob):
-    """Run a single point energy job using g09"""
-    _template = GaussianSinglePointEnergy
-
-    def post_process(self):
-        log_file = G09LogFile(self.output_file)
-        self._result = log_file.scf_energy
-

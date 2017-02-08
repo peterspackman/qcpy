@@ -1,5 +1,5 @@
 {
-name= {{job.name}}
+name= {{name}}
 {% block preamble_block %} {% endblock %}
 {% block atom_block %} {% endblock %}
 {% block scf_block %} {% endblock %}

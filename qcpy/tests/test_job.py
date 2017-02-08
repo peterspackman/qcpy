@@ -1,6 +1,6 @@
 from unittest import TestCase
 from qcpy.jobs.job import *
-from qcpy.jobs import GaussianSinglePointEnergyJob, TontoJob
+from qcpy.jobs import GaussianJob, TontoJob
 from .test_geometry import H2O
 
 
@@ -27,7 +27,7 @@ class JobCommon:
 class TestTontoJob(JobCommon, TestCase):
     _name = "tonto_scf_job"
     _geometry = H2O
-    _job = TontoJob(_geometry)
+    _job = TontoJob(geometry=H2O)
 
     def test_dependencies_exist(self):
         """tonto jobs depend on input files"""
@@ -46,10 +46,10 @@ class TestTontoJob(JobCommon, TestCase):
             self.job.set_basis_set(invalid_basis)
 
 
-class TestGaussianSinglePointEnergyJob(JobCommon, TestCase):
+class TestGaussianJob(JobCommon, TestCase):
     _name = "gaussian_energy_job"
     _geometry = H2O
-    _job = GaussianSinglePointEnergyJob(_geometry)
+    _job = GaussianJob(geometry=H2O)
 
     def test_dependencies_exist(self):
         """g09 jobs depend on input file"""
