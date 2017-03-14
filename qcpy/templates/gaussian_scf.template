@@ -1,9 +1,9 @@
-# {{job.method}}/{{job.basis_set}}
+# {{method}}/{{basis_set}}
 
-{{job.name}}
+{{name}}
 
-{{geom.charge}} {{geom.multiplicity}}
-{%- for line in geom.as_lines(line_format="g09") %}
+{{geometry.charge}} {{geometry.multiplicity}}
+{%- for line in geometry.as_lines(line_format="g09") %}
 {{ '%s' | format(line)}}
 {%- endfor %}
 {{'\n'}}

@@ -4,10 +4,13 @@ Geometry i.e. a set of atoms and their cartesian coordinates
 from collections import Counter
 import logging
 from typing import List
+import numpy as np
 
 from .atom import Atom
 from .element import Element
 from .formats.xyz import XYZFile
+from .coordinates import Coordinates
+from .utils import axis_rotation_matrix as rotation
 
 LOG = logging.getLogger(__name__)
 
@@ -63,6 +66,58 @@ class Geometry:
             format_string = _DEFAULT_FMT_STRING[line_format]
         return [format_string.format(element=a.element,
                                      center=a.center) for a in self.atoms]
+
+    def as_coordinate_matrix(self):
+        return np.array([atom.center.array for atom in self.atoms])
+
+
+    def rotate(self, x=0, y=0, z=0):
+        mat = self.as_coordinate_matrix()
+        rot = rotation(angle=x, axis='x').dot(
+                rotation(angle=y, axis='y').dot(
+                    rotation(angle=z, axis='z')))
+        mat = mat.dot(rot)
+        for i, row in enumerate(mat):
+            self.atoms[i]._center = Coordinates(row)
+
+    def move(self, vec):
+        for atom in self.atoms:
+            atom._center = Coordinates(atom.center.array + vec)
+
+    @property
+    def centroid(self):
+        centers = np.array([atom.center.array for atom in self.atoms])
+        return centers.mean(axis=0)
+
+    @property
+    def mean_radius(self):
+        mat = self.as_coordinate_matrix()
+        mat -= self.centroid
+        return np.linalg.norm(mat, axis=1).mean()
+
+    @property
+    def bounding_sphere_radius(self):
+        mat = self.as_coordinate_matrix()
+        mat -= self.centroid
+        return np.linalg.norm(mat, axis=1).max()
+
+    def reoriginate(self):
+        self.move(-self.centroid)
+
+    def principle_axes(self):
+        """Returns the eigenvectors of the
+        coordinate matrix in descending order"""
+        mat = self.as_coordinate_matrix()
+        mat -= self.centroid
+        cov = np.cov(mat.transpose())
+        eigvals, eigvecs = np.linalg.eig(cov)
+        idx = np.argsort(eigvals)[::-1]
+        return eigvecs[:, idx]
+
+    def principle_plane_normal(self):
+        ax1, ax2, _ = self.principle_axes()
+        print('Axes: ', ax1, ax2)
+        return np.cross(ax1, ax2)
 
     @property
     def n_atoms(self) -> int:

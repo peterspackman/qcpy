@@ -41,15 +41,16 @@ class XYZFile:
         for i, line in enumerate(lines, 1):
             current_line = i
             if i == 1:
-                number_of_atoms = int(line)
+                number_of_atoms = int(line.strip())
             elif i == 2:
                 comment = line
             else:
-                try:
-                    atom = parse_atom_line(line)
-                    atoms.append(atom)
-                except(LineFormatError) as file_error:
-                    raise FileFormatError(filename, current_line, file_error)
+                if line.strip() != '':
+                    try:
+                        atom = parse_atom_line(line.strip())
+                        atoms.append(atom)
+                    except(LineFormatError) as file_error:
+                        raise FileFormatError(filename, current_line, file_error)
         if not len(atoms) == number_of_atoms:
             raise FileFormatError(filename,
                                   current_line,
