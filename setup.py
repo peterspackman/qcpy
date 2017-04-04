@@ -21,7 +21,12 @@ setup(name='qcpy',
       package_data={
          'qcpy.templates': ['*.template']  # include all templates
       },
-      install_requires=['numpy', 'jinja2'],
+      entry_points={
+          'console_scripts': [
+              'qcpy-generate = qcpy.cli:main',
+          ]
+      },
+      install_requires=['numpy', 'jinja2', 'toml'],
       zip_safe=False,
       test_suite='nose.collector',
       tests_require=['nose']

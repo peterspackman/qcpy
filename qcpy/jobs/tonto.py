@@ -98,3 +98,7 @@ class TontoJob(GeometryJob, InputFileJob, dict):
     def post_process(self):
         contents = self.read_output_file(self._output_file)
         return contents
+
+    @property
+    def basis_set(self):
+        return self['basis_set']

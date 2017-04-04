@@ -116,7 +116,6 @@ class Geometry:
 
     def principle_plane_normal(self):
         ax1, ax2, _ = self.principle_axes()
-        print('Axes: ', ax1, ax2)
         return np.cross(ax1, ax2)
 
     @property

@@ -1,4 +1,4 @@
-# {{method}}/{{basis_set}}
+#p {{method.method}}/{{basis_set}} {{method.additional}}
 
 {{name}}
 
