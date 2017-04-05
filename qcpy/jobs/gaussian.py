@@ -16,10 +16,12 @@ class UnknownProtocolError(Exception):
 class G09Protocol:
     """Simple class representing a method available through
     g09"""
-    def __init__(self, method, additional_keywords='', category=''):
+    def __init__(self, method, additional_keywords='', category='',
+                 redundancy=None):
         self.method = method
         self.additional = additional_keywords
         self.category = category
+        self.redundancy = redundancy
 
     def __repr__(self):
         return '<G09: # {}/{{basis_set}} {}>'.format(self.method, self.additional)
@@ -73,7 +75,7 @@ available_protocols = {
     'm06hf-d3bj': G09Protocol('M06HF', D3BJ),
     'm06l': G09Protocol('M06L'),
     'm06l-d3bj': G09Protocol('M06L', D3BJ),
-    'mp2': G09Protocol('MP2', D3BJ),
+    'mp2': G09Protocol('MP2'),
     'mpw1b95': G09Protocol('mPWB95', 'iop(3/76=0690003100)'),
     'mpw1b95-d3bj': G09Protocol('mPWB95', 'iop(3/76=0690003100) ' + D3BJ),
     'mpwb1k': G09Protocol('mPWB95', 'iop(3/76=0560004400)'),
@@ -98,9 +100,9 @@ available_protocols = {
     'pwb6k-d3bj': G09Protocol('PWB6K', D3BJ),
     'pwpb95': G09Protocol('PWPB95'),
     'pwpb95-d3bj': G09Protocol('PWPB95', D3BJ),
-    's2-mp2': G09Protocol('S2-MP2'),
-    'scs-mp2': G09Protocol('SCS-MP2'),
-    'sos-mp2': G09Protocol('SOS-MP2'),
+    's2-mp2': G09Protocol('MP2', redundancy='mp2'),
+    'scs-mp2': G09Protocol('MP2', redundancy='mp2'),
+    'sos-mp2': G09Protocol('MP2', redundancy='mp2'),
     'spw92': G09Protocol('SPW92'),
     'ssb': G09Protocol('SSB'),
     'ssb-d3bj': G09Protocol('SSB', D3BJ),
