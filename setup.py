@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='qcpy',
-      version='0.1.1',
+      version='0.2.1',
       description='Tools for automating running quantum chemistry jobs',
       url='http://github.com/peterspackman/qcauto',
       author='Peter Spackman',
@@ -23,10 +23,11 @@ setup(name='qcpy',
       },
       entry_points={
           'console_scripts': [
-              'qcpy-generate = qcpy.cli:main',
+              'qcbench-setup = qcpy.cli:generate_inputs',
+              'qcbench-process = qcpy.cli:process_outputs'
           ]
       },
-      install_requires=['numpy', 'jinja2', 'toml'],
+      install_requires=['numpy', 'jinja2', 'tqdm'],
       zip_safe=False,
       test_suite='nose.collector',
       tests_require=['nose']

@@ -39,10 +39,12 @@ class Geometry:
         self.multiplicity = multiplicity
 
     @staticmethod
-    def from_xyz_file(filename):
+    def from_xyz_file(filename, parse_comments=False):
         """Create a geometry from a given xyzfile"""
-        return Geometry(atoms=XYZFile(filename).atoms,
-                        charge=0, multiplicity=1)
+        xyz = XYZFile(filename, parse_comments)
+        return Geometry(atoms=xyz.atoms,
+                        charge=xyz.charge,
+                        multiplicity=xyz.multiplicity)
 
     @property
     def elements(self) -> List[Element]:

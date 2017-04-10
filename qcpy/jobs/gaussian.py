@@ -5,6 +5,7 @@ import logging
 from ..templates import GaussianSCF as SCF
 from ..formats.gaussian import G09LogFile
 from .job import GeometryJob, InputFileJob
+import os
 
 LOG = logging.getLogger(__name__)
 
@@ -26,113 +27,75 @@ class G09Protocol:
     def __repr__(self):
         return '<G09: # {}/{{basis_set}} {}>'.format(self.method, self.additional)
 
+exchange_functionals = [
+    's', 'xa', 'b', 'pw91', 'mpw', 'g96', 'pbe', 'o', 'tpss',
+    'brx', 'pkzb', 'wpbeh', 'pbeh'
+]
+
+correlation_functionals = [
+   'vwn', 'vwn5', 'lyp', 'pl', 'p86', 'pw91', 'b95', 'pbe',
+   'tpss', 'kcis', 'brc', 'pkzb', 'vp86', 'v5lyp'
+]
+
+pure_functionals = [
+    'vsxc', 'hcth', 'hcth93', 'hcth147', 'hcth407', 'thcth', 'mo6l',
+    'b97', 'b97d', 'b97d3', 'sogga11', 'm11l', 'n12', 'mn12l', 'mn15l',
+]
+
+hybrids = [
+    'b3lyp', 'b3p86', 'b3pw91', 'b1b95', 'mpw1pw91', 'mpw1lyp',
+    'mpw1pbe', 'mpw3pbe', 'b98', 'b971', 'b972', 'pbe1pbe', 'b1lyp',
+    'o3lyp', 'bhandh', 'bhandhlyp', 'bmk', 'm06', 'm05', 'm052x',
+    'm06hf', 'm062x', 'm08hx', 'mn15', 'pw6b95',
+    'thcthhyb', 'apfd', 'apf', 'sogga11x', 'pbeh1pbe', 'tpssh', 'x3lyp'
+]
+
+rs_hybrids = [
+    'hseh1pbe', 'ohse2pbe', 'ohse1pbe', 'wb97xd', 'wb97', 'wb97x',
+    'lc-wpbe', 'cam-b3lyp', 'bissbpbe', 'm11', 'n12sx', 'mn12sx', 'lc-blyp',
+    'lc-bp86', 'lc-bpw91', 'lc-pbepbe', 'lc-whpbe'
+]
+
+double_hybrids = [
+    'mpw2plyp', 'dsdpbep86', 'pbe0dh', 'pbeq1dh'
+]
 
 available_protocols = {
-    'b1b95': G09Protocol('B1B95'),
-    'b1b95-d3bj': G09Protocol('B1B95', D3BJ),
-    'b2gpplyp': G09Protocol('B2PLYP', 'iop(3/125=0360003600,3/78=0640006400,'
+    'b2gpplyp': G09Protocol('b2plyp', 'iop(3/125=0360003600,3/78=0640006400,'
                                       '3/76=0350006500,3/77=1000010000,5/33=1,3/124=-040)'),
-    'b2gpplyp-d3bj': G09Protocol('B2PLYP', 'iop(3/125=0360003600,3/78=0640006400,3/76=0350006500,'
-                                           '3/77=1000010000,5/33=1,3/124=-040) ' + D3BJ),
-    'b2plyp': G09Protocol('B2PLYP'),
-    'b2plyp-d3bj': G09Protocol('B2PLYP', D3BJ),
-    'b3lyp': G09Protocol('B3LYP'),
-    'b3lyp-d3bj': G09Protocol('B3LYP', D3BJ),
-    'b3pw91': G09Protocol('B3PW91'),
-    'b3pw91-d3bj': G09Protocol('B3PW91', D3BJ),
-    'b97': G09Protocol('B97'),
-    'b97-d3bj': G09Protocol('B97', D3BJ),
-    'bhlyp': G09Protocol('BHandHLYP'),
-    'bhlyp-d3bj': G09Protocol('BHandHLYP', D3BJ),
-    'blyp': G09Protocol('BLYP'),
-    'blyp-d3bj': G09Protocol('BLYP', D3BJ),
-    'bmk': G09Protocol('BMK'),
-    'bmk-d3bj': G09Protocol('BMK', D3BJ),
-    'bop': G09Protocol('BOP'),
-    'bop-d3bj': G09Protocol('BOP', D3BJ), #
-    'bp86': G09Protocol('BP86'),
-    'bp86-d3bj': G09Protocol('BP86', D3BJ),
-    'bpbe': G09Protocol('BPBE'),
-    'bpbe-d3bj': G09Protocol('BPBE', D3BJ),
-    'cam-b3lyp': G09Protocol('CAM-B3LYP'),
-    'cam-b3lyp-d3bj': G09Protocol('CAM-B3LYP', D3BJ),
-    'dsd-blyp': G09Protocol('DSD-BLYP'), #
-    'dsd-blyp-d3bj': G09Protocol('DSD-BLYP', D3BJ),
-    'hf': G09Protocol('HF'),
-    'brh': G09Protocol('SVWN5','iop(3/76=0000010000)'), 
-    'hf-d3bj': G09Protocol('HF', D3BJ),
-    'lc-ωpbe': G09Protocol('LC-wPBE'),
-    'lc-ωpbe-d3bj': G09Protocol('LC-wPBE', D3BJ),
-    'm05': G09Protocol('M05'),
-    'm05-d3bj': G09Protocol('M05', D3BJ),
-    'm052x': G09Protocol('M052X'),
-    'm052x-d3bj': G09Protocol('M052X', D3BJ),
-    'm06': G09Protocol('M06'),
-    'm06-d3bj': G09Protocol('M06', D3BJ),
-    'm062x': G09Protocol('M062X'),
-    'm062x-d3bj': G09Protocol('M062X', D3BJ),
-    'm06hf': G09Protocol('M06HF'),
-    'm06hf-d3bj': G09Protocol('M06HF', D3BJ),
-    'm06l': G09Protocol('M06L'),
-    'm06l-d3bj': G09Protocol('M06L', D3BJ),
-    'mp2': G09Protocol('MP2'),
-    'mpw1b95': G09Protocol('mPWB95', 'iop(3/76=0690003100)'),
-    'mpw1b95-d3bj': G09Protocol('mPWB95', 'iop(3/76=0690003100) ' + D3BJ),
-    'mpwb1k': G09Protocol('mPWB95', 'iop(3/76=0560004400)'),
-    'mpwb1k-d3bj': G09Protocol('mPWB95', 'iop(3/76=0560004400) ' + D3BJ),
-    'olyp': G09Protocol('OLYP'),
-    'olyp-d3bj': G09Protocol('OLYP', D3BJ),
-    'opbe': G09Protocol('OPBE'),
-    'opbe-d3bj': G09Protocol('OPBE', D3BJ),
-    'pbe': G09Protocol('PBE'),
-    'pbe-d3bj': G09Protocol('PBE', D3BJ),
-    'pbe0': G09Protocol('PBE0'),
-    'pbe0-d3bj': G09Protocol('PBE0', D3BJ),
-    'pbe38': G09Protocol('PBE'), #
-    'pbe38-d3bj': G09Protocol('PBE'),
-    'pbesol': G09Protocol('PBEPBE', 'iop(3/74=5050)'), #
-    'pbesol-d3bj': G09Protocol('PBEPBE', 'iop(3/74=5050) ' + D3BJ),
-    'ptpss': G09Protocol('PTPSS'), #
-    'ptpss-d3bj': G09Protocol('PTPSS', D3BJ),
-    'pw6b95': G09Protocol('PW6B95'), #
-    'pw6b95-d3bj': G09Protocol('PW6B95', D3BJ),
-    'pwb6k': G09Protocol('PWB6K'), #
-    'pwb6k-d3bj': G09Protocol('PWB6K', D3BJ),
-    'pwpb95': G09Protocol('PWPB95'),
-    'pwpb95-d3bj': G09Protocol('PWPB95', D3BJ),
-    's2-mp2': G09Protocol('MP2', redundancy='mp2'),
-    'scs-mp2': G09Protocol('MP2', redundancy='mp2'),
-    'sos-mp2': G09Protocol('MP2', redundancy='mp2'),
-    'spw92': G09Protocol('SPW92'),
-    'ssb': G09Protocol('SSB'),
-    'ssb-d3bj': G09Protocol('SSB', D3BJ),
-    'svwn': G09Protocol('SVWN'),
-    'tpss': G09Protocol('TPSS'),
-    'tpss-d3bj': G09Protocol('TPSS', D3BJ),
-    'tpss0': G09Protocol('TPSS0'),
-    'tpss0-d3bj': G09Protocol('TPSS0', D3BJ),
-    'tpssh': G09Protocol('TPSSh'),
-    'tpssh-d3bj': G09Protocol('TPSSh', D3BJ),
-    'xyg3': G09Protocol('XYG3'),
-    'xyg3-d3bj': G09Protocol('XYG3', D3BJ),
-    'mpwlyp': G09Protocol('mPWLYP'),
-    'mpwlyp-d3bj': G09Protocol('mPWLYP', D3BJ),
-    'otpss': G09Protocol('oTPSS'),
-    'otpss-d3bj': G09Protocol('oTPSS', D3BJ),
-    'rpw86pbe': G09Protocol('rPW68PBE'),
-    'rpw86pbe-d3bj': G09Protocol('rPW68PBE', D3BJ),
-    'revpbe': G09Protocol('revPBE'),
-    'revpbe-d3bj': G09Protocol('revPBE', D3BJ),
-    'revpbe0': G09Protocol('revPBE0'),
-    'revpbe0-d3bj': G09Protocol('revPBE0', D3BJ),
-    'revpbe38': G09Protocol('revPBE38'),
-    'revpbe38-d3bj': G09Protocol('revPBE38', D3BJ),
-    'revssb': G09Protocol('revSSB'),
-    'revssb-d3bj': G09Protocol('revSSB', D3BJ),
-    'ωb97x-d': G09Protocol('wB97XD'),
+    'b2kplyp': G09Protocol('b2plyp',
+                           'iop(3/125=0420004200,3/76=0280007200,'
+                           '3/78=0580005800,3/77=1000010000,5/33=1)'),
+    'b2tplyp': G09Protocol('b2plyp', 
+                           'iop(3/125=0310003100,3/76=0400006000,'
+                           '3/78=0690006900,3/77=1000010000,5/33=1)'),
+    'dsd-blyp': G09Protocol('b2plyp',
+                            'iop(3/125=0400004600,3/76=0300007000,'
+                            '3/78=0560005600,3/77=1000010000,5/33=1)'),
+    'dsd-pbep86': G09Protocol('b2plyp',
+                              'iop(3/125=0250005300,3/76=0300007000,'
+                              '3/78=0430004300,3/74=1004,5/33=1)'),
+    'hf': G09Protocol('hf'),
+    'mp2': G09Protocol('mp2'),
+    'mpw1b95': G09Protocol('mpwb95', 'iop(3/76=0690003100)'),
+    'mpwb1k': G09Protocol('mpwb95', 'iop(3/76=0560004400)'),
+    'pbe38': G09Protocol('pbepbe', 'iop(3/76=06250003750)'), # check this
+    'pbesol': G09Protocol('pbepbe', 'iop(3/74=5050)'), #
+    's2-mp2': G09Protocol('mp2', redundancy='mp2'),
+    'scs-mp2': G09Protocol('mp2', redundancy='mp2'),
+    'sos-mp2': G09Protocol('mp2', redundancy='mp2'),
+    's2-mp': G09Protocol('mp2', redundancy='mp2'),
+    'scs(mi)-mp2': G09Protocol('mp2', redundancy='mp2'),
+    'scs-mp2-vdw': G09Protocol('mp2', redundancy='mp2'),
+
 }
 
+for x in exchange_functionals:
+    for c in correlation_functionals:
+        available_protocols[x+c] = G09Protocol(x+c)
 
+for xc in pure_functionals + hybrids + rs_hybrids + double_hybrids:
+    available_protocols[xc] = G09Protocol(xc)
 
 class GaussianJob(GeometryJob, InputFileJob):
     """Base class for all g09 jobs"""
@@ -146,14 +109,14 @@ class GaussianJob(GeometryJob, InputFileJob):
     }
 
     _available_basis_sets = [
-       '3-21G', '6-311++G(2d,2p)', '6-311G(d,p)',
-       '6-31G(d)', '6-31G(d,p)', 'Clementi-Roetti',
-       'Coppens', 'DZP', 'DZP-DKH', 'STO-3G', 'Sadlej+',
-       'Sadlej-PVTZ', 'Spackman-DZP+', 'TZP-DKH', 'Thakkar',
-       'VTZ-Ahlrichs', 'ahlrichs-polarization', 'aug-cc-pVDZ',
-       'aug-cc-pVQZ', 'aug-cc-pVTZ', 'cc-pVDZ', 'cc-pVQZ',
-       'cc-pVTZ', 'def2-SV(P)', 'def2-SVP', 'def2-TZVP',
-       'def2-TZVPP', 'pVDZ-Ahlrichs', 'vanLenthe-Baerends'
+        'sto-3g', '3-21g', '6-21g', '4-31g', '6-31g',
+        '6-311g', 'd95v', 'd95', 'shc', 'sec', 'cep-4g',
+        'cep-31g', 'cep-121g', 'lanl2mp', 'lanl2dz', 'sdd',
+        'sddall', 'cc-pvdz', 'cc-pvtz', 'cc-pvqz', 'cc-pv5z',
+        'cc-pv6z', 'sv', 'svp', 'tzv', 'tzvp', 'def2sv', 'def2svp', 
+        'def2svpp', 'def2tzvp', 'deftzvpp', 'def2qzv', 'def2qzvp',
+        'def2qzvpp', 'qzvp', 'midix', 'epr-ii', 'epr-iii', 'ugbs',
+        'dgdzvp', 'dgdzvp2', 'dgtzvp', 'cbsb7'
     ]
 
     _input_ext = '.gjf'
@@ -198,7 +161,8 @@ class GaussianJob(GeometryJob, InputFileJob):
 
     def read_output_file(self, filename):
         if self.params['kind'] == 'scf':
-            pass
+            e = G09LogFile(self._output_file).scf_energy
+            log.info('Energy (%s) = %g', self.params['name'], e)
         else:
             raise NotImplementedError
 

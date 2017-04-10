@@ -3,6 +3,7 @@
 """
 from pathlib import Path
 import logging
+import json
 
 from ..atom import Atom
 from ..coordinates import Coordinates
@@ -18,7 +19,7 @@ class XYZFile:
     filename = ""
     comment = ""
 
-    def __init__(self, path):
+    def __init__(self, path, parse_comments=False):
         if not isinstance(path, Path):
             path = Path(path)
         self.filename = path.name
@@ -26,6 +27,15 @@ class XYZFile:
         with path.open('r') as xyz_file:
             self.atoms, self.comment = XYZFile.parse_lines(xyz_file.readlines(),
                                                            filename=self.filename)
+        self.charge = 0
+        self.multiplicity = 1
+        if parse_comments:
+            if self.comment.strip() != "":
+                comments = json.loads(self.comment)
+                self.charge = comments['charge']
+                self.multiplicity = comments['multiplicity']
+
+
 
     @staticmethod
     def parse_lines(lines, filename="lines"):

@@ -1,4 +1,13 @@
-#p {{method.method}}/{{basis_set}} {{method.additional}}
+{%- if mem -%}
+%mem={{mem}}
+{%- endif -%}
+{%- if nprocs -%}
+%nproc={{nprocs}}
+{%- endif -%}
+{%- if chkfile -%}
+%chk={{chkfile}}
+{%- endif -%}
+#p {{method.method}}/{{basis_set}} {{method.additional}} scf=(conver=8,maxconventionalcycles=555,xqc)
 
 {{name}}
 
