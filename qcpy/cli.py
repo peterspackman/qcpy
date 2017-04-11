@@ -78,12 +78,15 @@ def read_systems(path, required_geometries, prefix='', suffix='.xyz'):
 
 def read_reactions(reactions, systems, prefix='', suffix='.xyz'):
     """Add the Reaction, Reagent etc. database entities from the supplied input"""
+    r = {}
     for reaction, info in reactions.items():
         LOG.debug('Reaction: %s', reaction)
         sys_names = info['reactants'][1] + info['products'][1]
         reaction_systems = [systems[x.rstrip(suffix)] for x in sys_names]
         LOG.debug('Reaction systems: %s', reaction_systems)
         stoichiometry = [-x for x in info['reactants'][0]] + info['products'][0]
+        r[reaction] = [(s.rstrip(suffix), r) for s, r in zip(sys_names, stoichiometry)]
+    return r
 
 
 def create_input_files(root, systems, basis_set):
@@ -121,6 +124,7 @@ def create_input_files(root, systems, basis_set):
         LOG.info('Skipping %s: calculation would be redundant when performing %s', ', '.join(v), k)
     return skipped
 
+
 def read_outputs(directories, suffix='.log', expected=1):
     energies = defaultdict(dict)
     for d in directories:
@@ -147,6 +151,11 @@ def get_required_geometries(benchmark_info, suffix='.xyz'):
 
 
 def generate_inputs():
+    """ Given a directory with an info.json file and N .xyz files,
+    create a subdirectory for each method and generate g09 input files
+    for each system required in the reactions specified in info.json
+
+    """
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('directory', default='.', 
@@ -172,12 +181,18 @@ def generate_inputs():
                            required_geometries,
                            prefix=benchmark_info['benchmark'],
                            suffix=args.file_suffix)
-    read_reactions(benchmark_info['reactions'], systems, prefix=benchmark_info['benchmark'], suffix=args.file_suffix)
+    reactions = read_reactions(benchmark_info['reactions'], systems, prefix=benchmark_info['benchmark'], suffix=args.file_suffix)
     skipped = create_input_files(args.directory, systems, args.basis_set)
     benchmark_info['post process'] = skipped
     write_benchmark_info(info_file, benchmark_info)
 
+
 def process_outputs():
+    """ Main method to process output files from g09 calculations
+    Assumes directory structure is as the output from generate_inputs would
+    leave.
+
+    """
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('directory', default='.', 
@@ -192,6 +207,21 @@ def process_outputs():
     info_file = Path(args.directory, 'info.json')
     benchmark_info = read_benchmark_info(info_file)
     required_geometries = get_required_geometries(benchmark_info)
+    systems = read_systems(Path(args.directory),
+                           required_geometries,
+                           prefix=benchmark_info['benchmark'])
+
 
     subdirs = [p for p in Path(args.directory, 'calcs').iterdir() if p.is_dir()]
     energies = read_outputs(subdirs, expected=len(required_geometries))
+    write_benchmark_info(Path(args.directory, 'sp_energies.json'), energies)
+    reactions = read_reactions(benchmark_info['reactions'],
+                               systems, prefix=benchmark_info['benchmark'])
+
+    reaction_energies = defaultdict(dict)
+    for reaction, stoich in reactions.items():
+        for method_name, sp_energies in energies.items():
+            reaction_energies[reaction][method_name] = \
+                    sum(sp_energies[s] * n for s, n in stoich)
+    write_benchmark_info(Path(args.directory, 'reaction_energies.json'), reaction_energies)
+
