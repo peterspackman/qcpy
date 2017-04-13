@@ -14,7 +14,7 @@ LOG = logging.getLogger(__name__)
 
 benchmark_protocols = {
     'LDA': [
-        'svwn5', 'svwn'
+        'svwn5'
     ],
     'GGA': [
         'blyp', 'b97', 'b97d', 'hcth407', 'pbepbe',
@@ -36,6 +36,9 @@ benchmark_protocols = {
         'bmk', 'b1b95', 'tpssh', 'thcthhyb', 'pw6b95',
         'm08hx', 'mn15'
     ],
+    'DH': [
+        'b2gpplyp', 'b2kplyp', 'b2tplyp', 'dsd-blyp', 'dsd-pbep86'
+    ],
     'RS': [
         'cam-b3lyp', 'lc-wpbe', 'lc-whpbe', 'wb97', 'wb97x',
         'wb97xd', 'n12sx', 'm11', 'mn12sx', 'lc-blyp', 'lc-pbepbe',
@@ -46,6 +49,11 @@ benchmark_protocols = {
         'scs-mp2-vdw'
     ]
 }
+
+def rsuffix(s, suffix):
+    if s.endswith(suffix):
+        return s[:-len(suffix)]
+    return s
 
 already_dispersion_corrected = ['b97d', 'apfd', 'wb97xd', 'dsdpbep86']
 
@@ -71,7 +79,7 @@ def read_systems(path, required_geometries, prefix='', suffix='.xyz'):
     with tqdm(total=len(geometry_files), unit='xyz', desc='Reading geometries') as pbar:
         for f in geometry_files:
             geometry = Geometry.from_xyz_file(f, parse_comments=True)
-            systems[f.name.strip(suffix)] = geometry
+            systems[f.stem] = geometry
             pbar.update(1)
     return systems
 
@@ -82,10 +90,10 @@ def read_reactions(reactions, systems, prefix='', suffix='.xyz'):
     for reaction, info in reactions.items():
         LOG.debug('Reaction: %s', reaction)
         sys_names = info['reactants'][1] + info['products'][1]
-        reaction_systems = [systems[x.rstrip(suffix)] for x in sys_names]
+        reaction_systems = [systems[rsuffix(x,suffix)] for x in sys_names]
         LOG.debug('Reaction systems: %s', reaction_systems)
         stoichiometry = [-x for x in info['reactants'][0]] + info['products'][0]
-        r[reaction] = [(s.rstrip(suffix), r) for s, r in zip(sys_names, stoichiometry)]
+        r[reaction] = [(rsuffix(s, suffix), r) for s, r in zip(sys_names, stoichiometry)]
     return r
 
 
@@ -144,7 +152,7 @@ def get_required_geometries(benchmark_info, suffix='.xyz'):
     for r in benchmark_info['reactions'].values():
         required_geometries = required_geometries.union(
                 set(r['reactants'][1] + r['products'][1]))
-    required_geometries = set(map(lambda x: x.rstrip(suffix), required_geometries))
+    required_geometries = set(rsuffix(s, suffix) for s in required_geometries)
     return required_geometries
 
 
@@ -176,6 +184,7 @@ def generate_inputs():
     benchmark_info = read_benchmark_info(info_file)
     required_geometries = get_required_geometries(benchmark_info, suffix=args.file_suffix)
     LOG.info('%d geometry files required for all reactions', len(required_geometries))
+    LOG.debug("Required geometries: %s", required_geometries)
 
     systems = read_systems(Path(args.directory),
                            required_geometries,
