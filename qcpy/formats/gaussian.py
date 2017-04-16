@@ -4,6 +4,7 @@ Contains class/methods to extract data from a g09 log file
 from pathlib import Path
 import logging
 from . import FileFormatError, LineFormatError
+from collections import defaultdict
 
 LOG = logging.getLogger(__name__)
 
@@ -12,6 +13,7 @@ class G09LogFile:
     _filename = ""
     _contents = []
     _scf_energy = None
+    _spin_components = None
 
     def __init__(self, path):
         if not isinstance(path, Path):
@@ -49,3 +51,36 @@ class G09LogFile:
         returning the energy as a float"""
         tokens = line.split()
         return float(tokens[4])
+
+    @staticmethod
+    def parse_spin_component_line(line):
+        tokens = line.strip().split()
+        kind = tokens[0]
+        t2 = float(tokens[3].replace('D', 'E'))
+        e2 = float(tokens[-1].replace('D', 'E'))
+        return kind, t2, e2
+
+    @property
+    def mp2_spin_components(self):
+        """Return the T(2) and E(2) spin components of this calculation,
+        finding it in the log file if it is not already set"""
+        if self._spin_components is None:
+            self._spin_components = defaultdict(dict)
+            LOG.debug('Trying to find T(2) and E(2) spin components in %s',
+                      self._filename)
+            for i, line in enumerate(self.contents, 1):
+                if line.strip().startswith('Spin components'):
+                    try:
+                        for j in range(3):
+                            kind, t2, et =\
+                                    G09LogFile.parse_spin_component_line(self.contents[i + j])
+                            self._spin_components[kind]['t2'] = t2
+                            self._spin_components[kind]['e2'] = t2
+                    except(LineFormatError) as line_error:
+                        raise FileFormatError(self._filename, i, line_error)
+                    break
+            else:
+                raise FileFormatError(self._filename, i,
+                                      "reached end of file without SCF energy")
+        return self._spin_components
+

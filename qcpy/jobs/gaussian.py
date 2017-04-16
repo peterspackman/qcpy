@@ -11,21 +11,25 @@ LOG = logging.getLogger(__name__)
 
 D3BJ = 'EmpiricalDispersion=GD3BJ'
 
+
+
 class UnknownProtocolError(Exception):
     pass
+
 
 class G09Protocol:
     """Simple class representing a method available through
     g09"""
     def __init__(self, method, additional_keywords='', category='',
-                 redundancy=None):
+                 redundancy=None, correction=None):
         self.method = method
         self.additional = additional_keywords
         self.category = category
         self.redundancy = redundancy
+        self.correction = correction
 
     def __repr__(self):
-        return '<G09: # {}/{{basis_set}} {}>'.format(self.method, self.additional)
+        return 'g09: #p {} {}'.format(self.method, self.additional)
 
 exchange_functionals = [
     's', 'xa', 'b', 'pw91', 'mpw', 'g96', 'pbe', 'o', 'tpss',
@@ -81,12 +85,18 @@ available_protocols = {
     'mpwb1k': G09Protocol('mpwb95', 'iop(3/76=0560004400)'),
     'pbe38': G09Protocol('pbepbe', 'iop(3/76=06250003750)'), # check this
     'pbesol': G09Protocol('pbepbe', 'iop(3/74=5050)'), #
-    's2-mp2': G09Protocol('mp2', redundancy='mp2'),
-    'scs-mp2': G09Protocol('mp2', redundancy='mp2'),
-    'sos-mp2': G09Protocol('mp2', redundancy='mp2'),
-    's2-mp': G09Protocol('mp2', redundancy='mp2'),
-    'scs(mi)-mp2': G09Protocol('mp2', redundancy='mp2'),
-    'scs-mp2-vdw': G09Protocol('mp2', redundancy='mp2'),
+    'scs-mp2': G09Protocol('mp2', redundancy='mp2',
+                           correction={'a': 1.200, 'b': 0.333}),
+    'sos-mp2': G09Protocol('mp2', redundancy='mp2',
+                           correction={'a': 1.300, 'b': 0.000}),
+    'scs(mi)-mp2': G09Protocol('mp2', redundancy='mp2',
+                               correction={'a': 0.400, 'b': 1.290}),
+    'scsn-mp2': G09Protocol('mp2', redundancy='mp2',
+                            correction={'a': 0.000, 'b': 1.760}),
+    'scs-mp2-vdw': G09Protocol('mp2', redundancy='mp2',
+                               correction={'a': 1.280, 'b': 0.500}),
+    's2-mp': G09Protocol('mp2', redundancy='mp2',
+                         correction={'a': 1.150, 'b': 0.750}),
 
 }
 

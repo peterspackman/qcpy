@@ -7,6 +7,7 @@ from pathlib import Path
 from qcpy.geometry import Geometry
 from qcpy.jobs.gaussian import available_protocols, GaussianJob
 from qcpy.formats.gaussian import G09LogFile
+from qcpy.utils import scs_e2_correction
 from collections import defaultdict
 
 LOG_FORMAT = '[%(name)s]: %(message)s'
@@ -143,7 +144,12 @@ def read_outputs(directories, suffix='.log', expected=1):
         for f in log_files:
             l = G09LogFile(f)
             energies[d.name][f.stem] = l.scf_energy
-            LOG.info('Energy %s = %g', str(f), l.scf_energy)
+            if d.name == 'mp2':
+                dependents = {n: p for n, p in available_protocols.items() if p.redundancy == 'mp2'}
+                for method, protocol in dependents.items():
+                    sc = l.mp2_spin_components
+                    correction = scs_e2_correction(sc, **protocol.correction)
+                    energies[method][f.stem] = l.scf_energy + correction
     return energies
 
 
@@ -232,5 +238,6 @@ def process_outputs():
         for method_name, sp_energies in energies.items():
             reaction_energies[reaction][method_name] = \
                     sum(sp_energies[s] * n for s, n in stoich)
+
     write_benchmark_info(Path(args.directory, 'reaction_energies.json'), reaction_energies)
 

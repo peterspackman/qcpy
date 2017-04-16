@@ -44,3 +44,15 @@ def axis_rotation_matrix(angle=0, axis='x'):
             [sin,   cos,   0],
             [0,       0,   1]])
 
+
+def scs_e2_correction(components, a=1.0, b=1.0):
+    """Calculate the correction component to the MP2
+    energy in the form a * OS + b * SS where
+    OS = alpha-beta and SS = alpha-alpha + beta-beta"""
+    OS = components['alpha-beta']['e2']
+    SS = components['alpha-alpha']['e2'] + components['beta-beta']['e2']
+    return a*OS + b*SS
+
+
+def d3_correction():
+    pass
