@@ -216,6 +216,8 @@ def process_outputs():
                         help="Suffix when looking for output files")
     parser.add_argument('--log-level', default='WARN',
                         help='Level of log info to display')
+    parser.add_argument('--d3-correction', default='d3bj',
+                        help='Perform Grimme D3 corection for dft functionals')
     args = parser.parse_args()
     logging.basicConfig(format=LOG_FORMAT, level=args.log_level)
 

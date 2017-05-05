@@ -12,6 +12,8 @@ from .formats.xyz import XYZFile
 from .coordinates import Coordinates
 from .utils import axis_rotation_matrix as rotation
 
+Bohr = 0.5291772105638411
+
 LOG = logging.getLogger(__name__)
 
 _DEFAULT_FMT_STRING = {
@@ -69,7 +71,17 @@ class Geometry:
         return [format_string.format(element=a.element,
                                      center=a.center) for a in self.atoms]
 
-    def as_coordinate_matrix(self):
+
+    def as_atomic_numbers(self):
+        return np.array([atom.element.atomic_number for atom in self.atoms], dtype=int)
+
+    def as_coordinate_matrix(self, units='angstrom'):
+        m = np.array([atom.center.array for atom in self.atoms]).reshape((len(self.atoms), 3))
+        if units == 'bohr':
+            return m / Bohr
+        return m
+
+    def as_coordinate_array(self):
         return np.array([atom.center.array for atom in self.atoms])
 
 
