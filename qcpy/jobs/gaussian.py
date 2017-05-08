@@ -21,12 +21,13 @@ class G09Protocol:
     """Simple class representing a method available through
     g09"""
     def __init__(self, method, additional_keywords='', category='',
-                 redundancy=None, correction=None):
+                 redundancy=None, correction=None, includes_dispersion=False):
         self.method = method
         self.additional = additional_keywords
         self.category = category
         self.redundancy = redundancy
         self.correction = correction
+        self.includes_dispersion = includes_dispersion
 
     def __repr__(self):
         return 'g09: #p {} {}'.format(self.method, self.additional)
@@ -80,24 +81,23 @@ available_protocols = {
                               'iop(3/125=0250005300,3/76=0300007000,'
                               '3/78=0430004300,3/74=1004,5/33=1)'),
     'hf': G09Protocol('hf'),
-    'mp2': G09Protocol('mp2'),
+    'mp2': G09Protocol('mp2', includes_dispersion=True),
     'mpw1b95': G09Protocol('mpwb95', 'iop(3/76=0690003100)'),
     'mpwb1k': G09Protocol('mpwb95', 'iop(3/76=0560004400)'),
     'pbe38': G09Protocol('pbepbe', 'iop(3/76=06250003750)'), # check this
     'pbesol': G09Protocol('pbepbe', 'iop(3/74=5050)'), #
-    'scs-mp2': G09Protocol('mp2', redundancy='mp2',
+    'scs-mp2': G09Protocol('mp2', redundancy='mp2', includes_dispersion=True,
                            correction={'a': 1.200, 'b': 0.333}),
-    'sos-mp2': G09Protocol('mp2', redundancy='mp2',
+    'sos-mp2': G09Protocol('mp2', redundancy='mp2', includes_dispersion=True,
                            correction={'a': 1.300, 'b': 0.000}),
-    'scs(mi)-mp2': G09Protocol('mp2', redundancy='mp2',
+    'scs(mi)-mp2': G09Protocol('mp2', redundancy='mp2', includes_dispersion=True,
                                correction={'a': 0.400, 'b': 1.290}),
-    'scsn-mp2': G09Protocol('mp2', redundancy='mp2',
+    'scsn-mp2': G09Protocol('mp2', redundancy='mp2', includes_dispersion=True,
                             correction={'a': 0.000, 'b': 1.760}),
-    'scs-mp2-vdw': G09Protocol('mp2', redundancy='mp2',
+    'scs-mp2-vdw': G09Protocol('mp2', redundancy='mp2', includes_dispersion=True,
                                correction={'a': 1.280, 'b': 0.500}),
-    's2-mp': G09Protocol('mp2', redundancy='mp2',
+    's2-mp': G09Protocol('mp2', redundancy='mp2', includes_dispersion=True,
                          correction={'a': 1.150, 'b': 0.750}),
-
 }
 
 for x in exchange_functionals:
