@@ -10,6 +10,13 @@ from qcpy.formats.gaussian import G09LogFile
 from qcpy.utils import scs_e2_correction
 from collections import defaultdict
 
+HAVE_DFTD3_CORRECTION = False
+try:
+    from dftd3 import d3_correction
+    HAVE_DFTD3_CORRECTION = True
+except ModuleNotFoundError as e:
+    pass
+
 LOG_FORMAT = '[%(name)s]: %(message)s'
 LOG = logging.getLogger(__name__)
 
@@ -77,7 +84,7 @@ def read_systems(path, required_geometries, prefix='', suffix='.xyz'):
     app_root = 'qcdb'
     systems = {}
     geometry_files = list(map(lambda x: Path(path, x).with_suffix(suffix), required_geometries))
-    with tqdm(total=len(geometry_files), unit='xyz', desc='Reading geometries') as pbar:
+    with tqdm(total=len(geometry_files), unit='systems', desc='Reading geometries') as pbar:
         for f in geometry_files:
             geometry = Geometry.from_xyz_file(f, parse_comments=True)
             systems[f.stem] = geometry
@@ -134,7 +141,7 @@ def create_input_files(root, systems, basis_set):
     return skipped
 
 
-def read_outputs(directories, suffix='.log', expected=1):
+def read_outputs(directories, systems, suffix='.log', expected=1):
     energies = defaultdict(dict)
     for d in directories:
         log_files = list(d.glob('*{}'.format(suffix)))
@@ -142,8 +149,20 @@ def read_outputs(directories, suffix='.log', expected=1):
             LOG.warn('Less log files than expected in %s (%d/%d)',
                      d, len(log_files), 4)
         for f in log_files:
+            proto = available_protocols[d.name]
             l = G09LogFile(f)
             energies[d.name][f.stem] = l.scf_energy
+
+
+            if HAVE_DFTD3_CORRECTION:
+                if not proto.includes_dispersion:
+                    s = systems[f.stem]
+                    d3, _ = d3_correction(s.as_atomic_numbers(),
+                                          s.as_coordinate_matrix(units='bohr'),
+                                          func=d.name)
+                    LOG.debug("Dispersion correction for %s (%s): %s hartree", f.stem, d.name, d3)
+                    energies[d.name + '-d3bj'][f.stem] = l.scf_energy + d3
+
             if d.name == 'mp2':
                 dependents = {n: p for n, p in available_protocols.items() if p.redundancy == 'mp2'}
                 for method, protocol in dependents.items():
@@ -209,6 +228,7 @@ def process_outputs():
 
     """
     import argparse
+    import time
     parser = argparse.ArgumentParser()
     parser.add_argument('directory', default='.', 
                         help='Path in which to look for input')
@@ -230,7 +250,10 @@ def process_outputs():
 
 
     subdirs = [p for p in Path(args.directory, 'calcs').iterdir() if p.is_dir()]
-    energies = read_outputs(subdirs, expected=len(required_geometries))
+    t1 = time.time()
+    energies = read_outputs(subdirs, systems, expected=len(required_geometries))
+    t2 = time.time()
+    LOG.debug('%s energies in %s s', len(energies) * len(systems), (t2-t1))
     write_benchmark_info(Path(args.directory, 'sp_energies.json'), energies)
     reactions = read_reactions(benchmark_info['reactions'],
                                systems, prefix=benchmark_info['benchmark'])
