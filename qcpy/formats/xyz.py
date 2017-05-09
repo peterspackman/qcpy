@@ -48,19 +48,17 @@ class XYZFile:
         current_line = 0
         comment = ""
         atoms = []
-        for i, line in enumerate(lines, 1):
+        n, comment, *atom_lines = lines
+        number_of_atoms = int(n.strip())
+        for i, line in enumerate(atom_lines, 3):
             current_line = i
-            if i == 1:
-                number_of_atoms = int(line.strip())
-            elif i == 2:
-                comment = line
-            else:
-                if line.strip() != '':
-                    try:
-                        atom = parse_atom_line(line.strip())
-                        atoms.append(atom)
-                    except(LineFormatError) as file_error:
-                        raise FileFormatError(filename, current_line, file_error)
+            if line.strip() != '':
+                try:
+                    atom = parse_atom_line(line.strip())
+                    atoms.append(atom)
+                except(LineFormatError) as file_error:
+                    raise FileFormatError(filename, current_line, file_error)
+
         if not len(atoms) == number_of_atoms:
             raise FileFormatError(filename,
                                   current_line,
