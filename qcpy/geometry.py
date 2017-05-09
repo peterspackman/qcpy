@@ -34,7 +34,7 @@ class Geometry:
     multiplicity = 1
     _molecular_formula = ""
 
-    def __init__(self, atoms: List[Atom], charge: int = 0,
+    def __init__(self, atoms: List[Atom], *, charge: int = 0,
                  multiplicity: int = 1):
         self.atoms = atoms
         self.charge = charge
@@ -64,7 +64,7 @@ class Geometry:
             LOG.debug('Molecular formula: %s', self._molecular_formula)
         return self._molecular_formula
 
-    def as_lines(self, line_format: str = "g09") -> str:
+    def as_lines(self, *, line_format: str = "g09") -> str:
         """Return this geometry in a line by line string"""
         if line_format in _DEFAULT_FMT_STRING.keys():
             format_string = _DEFAULT_FMT_STRING[line_format]
@@ -75,7 +75,7 @@ class Geometry:
     def as_atomic_numbers(self):
         return np.array([atom.element.atomic_number for atom in self.atoms], dtype=int)
 
-    def as_coordinate_matrix(self, units='angstrom'):
+    def as_coordinate_matrix(self, *, units='angstrom'):
         m = np.array([atom.center.array for atom in self.atoms]).reshape((len(self.atoms), 3))
         if units == 'bohr':
             return m / Bohr
@@ -85,7 +85,7 @@ class Geometry:
         return np.array([atom.center.array for atom in self.atoms])
 
 
-    def rotate(self, x=0, y=0, z=0):
+    def rotate(self, *, x=0, y=0, z=0):
         mat = self.as_coordinate_matrix()
         rot = rotation(angle=x, axis='x').dot(
                 rotation(angle=y, axis='y').dot(

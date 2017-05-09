@@ -38,7 +38,7 @@ class XYZFile:
 
 
     @staticmethod
-    def parse_lines(lines, filename="lines"):
+    def parse_lines(lines, *, filename="lines"):
         """
         Parse a .xyz file line by line, returning a list of Atom and the comment string
         >>> XYZFile.parse_lines(['1', 'this is a comment line', "H 0.0 0.0 0.0"])
