@@ -79,7 +79,7 @@ def write_benchmark_info(filename, benchmark_info):
                 separators=(',', ': '))
 
 
-def read_systems(path, required_geometries, prefix='', suffix='.xyz'):
+def read_systems(path, required_geometries, *, prefix='', suffix='.xyz'):
     """Add the systems to the database"""
     app_root = 'qcdb'
     systems = {}
@@ -92,7 +92,7 @@ def read_systems(path, required_geometries, prefix='', suffix='.xyz'):
     return systems
 
 
-def read_reactions(reactions, systems, prefix='', suffix='.xyz'):
+def read_reactions(reactions, systems, *, prefix='', suffix='.xyz'):
     """Add the Reaction, Reagent etc. database entities from the supplied input"""
     r = {}
     for reaction, info in reactions.items():
@@ -141,7 +141,7 @@ def create_input_files(root, systems, basis_set):
     return skipped
 
 
-def read_outputs(directories, systems, suffix='.log', expected=1):
+def read_outputs(directories, systems, *, suffix='.log', expected=1):
     energies = defaultdict(dict)
     for d in directories:
         log_files = list(d.glob('*{}'.format(suffix)))
@@ -172,7 +172,7 @@ def read_outputs(directories, systems, suffix='.log', expected=1):
     return energies
 
 
-def get_required_geometries(benchmark_info, suffix='.xyz'):
+def get_required_geometries(benchmark_info, *, suffix='.xyz'):
     required_geometries = set()
     for r in benchmark_info['reactions'].values():
         required_geometries = required_geometries.union(

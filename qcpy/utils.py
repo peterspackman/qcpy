@@ -24,7 +24,7 @@ class working_directory:
     def __exit__(self, exc_type, exc_val, exc_tb):
         os.chdir(self.old_directory)
 
-def axis_rotation_matrix(angle=0, axis='x'):
+def axis_rotation_matrix(*, angle=0, axis='x'):
     sin = np.sin(angle)
     cos = np.cos(angle)
     if axis == 'x':
@@ -45,7 +45,7 @@ def axis_rotation_matrix(angle=0, axis='x'):
             [0,       0,   1]])
 
 
-def scs_e2_correction(components, a=1.0, b=1.0):
+def scs_e2_correction(components, *, a=1.0, b=1.0):
     """Calculate the correction component to the MP2
     energy in the form a * OS + b * SS where
     OS = alpha-beta and SS = alpha-alpha + beta-beta"""
