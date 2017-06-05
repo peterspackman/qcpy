@@ -61,7 +61,7 @@ class Geometry:
             for symbol, count in sorted(Counter(symbols).items(),
                                         key=lambda c: c[0]):
                 self._molecular_formula += symbol + (str(count) if count > 1 else "")
-            LOG.debug('Molecular formula: %s', self._molecular_formula)
+            # LOG.debug('Molecular formula: %s', self._molecular_formula)
         return self._molecular_formula
 
     def as_lines(self, *, line_format: str = "g09") -> str:
@@ -136,3 +136,9 @@ class Geometry:
     def n_atoms(self) -> int:
         """The number of atoms in this geometry"""
         return len(self.atoms)
+
+    def __str__(self) -> str:
+        return self.molecular_formula
+
+    def __repr__(self) -> str:
+        return 'Geometry({self})'.format(self=self)

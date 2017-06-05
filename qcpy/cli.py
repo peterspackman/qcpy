@@ -3,6 +3,7 @@ import argparse
 import logging
 import json
 import os
+import shutil
 from pathlib import Path
 from qcpy.geometry import Geometry
 from qcpy.jobs.gaussian import available_protocols, GaussianJob
@@ -79,15 +80,31 @@ def write_benchmark_info(filename, benchmark_info):
                 separators=(',', ': '))
 
 
-def read_systems(path, required_geometries, *, prefix='', suffix='.xyz'):
+def guess_geometry_dir(path):
+    for guess in ['xyz', 'XYZ', 'geoms', 'GEOMS']:
+        path_guess = Path(path, guess)
+        if path_guess.exists() and path_guess.is_dir():
+            return path_guess
+    return None
+
+def read_systems(path, required_geometries, *, prefix='', suffix='.xyz', copy_to=None):
     """Add the systems to the database"""
     app_root = 'qcdb'
     systems = {}
-    geometry_files = list(map(lambda x: Path(path, x).with_suffix(suffix), required_geometries))
+    geometry_dir = guess_geometry_dir(path)
+
+    if geometry_dir is None:
+        LOG.error('Could not locate geometries')
+        return None
+
+    geometry_files = list(map(lambda x: Path(geometry_dir, x).with_suffix(suffix), required_geometries))
     with tqdm(total=len(geometry_files), unit='systems', desc='Reading geometries') as pbar:
         for f in geometry_files:
             geometry = Geometry.from_xyz_file(f, parse_comments=True)
             systems[f.stem] = geometry
+
+            if copy_to is not None:
+                shutil.copy(f, copy_to)
             pbar.update(1)
     return systems
 
@@ -96,10 +113,10 @@ def read_reactions(reactions, systems, *, prefix='', suffix='.xyz'):
     """Add the Reaction, Reagent etc. database entities from the supplied input"""
     r = {}
     for reaction, info in reactions.items():
-        LOG.debug('Reaction: %s', reaction)
+        LOG.debug('Processing reaction %s', reaction)
         sys_names = info['reactants'][1] + info['products'][1]
         reaction_systems = [systems[rsuffix(x,suffix)] for x in sys_names]
-        LOG.debug('Reaction systems: %s', reaction_systems)
+        LOG.debug('Contains %s', reaction_systems)
         stoichiometry = [-x for x in info['reactants'][0]] + info['products'][0]
         r[reaction] = [(rsuffix(s, suffix), r) for s, r in zip(sys_names, stoichiometry)]
     return r
@@ -143,16 +160,15 @@ def create_input_files(root, systems, basis_set):
 
 def read_outputs(directories, systems, *, suffix='.log', expected=1):
     energies = defaultdict(dict)
-    for d in directories:
+    for d in tqdm(directories, desc='Reading calculations', unit='protocol'):
         log_files = list(d.glob('*{}'.format(suffix)))
         if len(log_files) < expected:
             LOG.warn('Less log files than expected in %s (%d/%d)',
                      d, len(log_files), 4)
-        for f in log_files:
-            proto = available_protocols[d.name]
+        proto = available_protocols[d.name]
+        for f in tqdm(log_files, desc='Reading job files', unit='gjf'):
             l = G09LogFile(f)
             energies[d.name][f.stem] = l.scf_energy
-
 
             if HAVE_DFTD3_CORRECTION:
                 if not proto.includes_dispersion:
@@ -238,15 +254,33 @@ def process_outputs():
                         help='Level of log info to display')
     parser.add_argument('--d3-correction', default='d3bj',
                         help='Perform Grimme D3 corection for dft functionals')
+    parser.add_argument('--output-directory', '-o', default=None,
+                        help='Location to place resulting/output files')
     args = parser.parse_args()
+
+    # set the output directory to default if not set
+
     logging.basicConfig(format=LOG_FORMAT, level=args.log_level)
 
     info_file = Path(args.directory, 'info.json')
+
     benchmark_info = read_benchmark_info(info_file)
+    benchmark_name = benchmark_info['benchmark']
     required_geometries = get_required_geometries(benchmark_info)
+    copy_to = None
+
+    if args.output_directory is not None:
+        Path(args.output_directory).mkdir()
+        shutil.copy(info_file, Path(args.output_directory, 'info.json'))
+        copy_to = Path(args.output_directory, 'xyz')
+        copy_to.mkdir()
+    else:
+        args.output_directory = args.directory
+
     systems = read_systems(Path(args.directory),
                            required_geometries,
-                           prefix=benchmark_info['benchmark'])
+                           prefix=benchmark_info['benchmark'],
+                           copy_to=copy_to)
 
 
     subdirs = [p for p in Path(args.directory, 'calcs').iterdir() if p.is_dir()]
@@ -254,7 +288,8 @@ def process_outputs():
     energies = read_outputs(subdirs, systems, expected=len(required_geometries))
     t2 = time.time()
     LOG.debug('%s energies in %s s', len(energies) * len(systems), (t2-t1))
-    write_benchmark_info(Path(args.directory, 'sp_energies.json'), energies)
+    write_benchmark_info(Path(args.output_directory, 'energies.json'),
+                         energies)
     reactions = read_reactions(benchmark_info['reactions'],
                                systems, prefix=benchmark_info['benchmark'])
 
@@ -264,5 +299,6 @@ def process_outputs():
             reaction_energies[reaction][method_name] = \
                     sum(sp_energies[s] * n for s, n in stoich)
 
-    write_benchmark_info(Path(args.directory, 'reaction_energies.json'), reaction_energies)
+    write_benchmark_info(Path(args.output_directory, 'reaction_energies.json'),
+                         reaction_energies)
 
