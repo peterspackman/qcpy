@@ -3,8 +3,12 @@ Contains class/methods to extract data from a g09 log file
 """
 from pathlib import Path
 import logging
+import re
 from . import FileFormatError, LineFormatError
 from collections import defaultdict
+
+HF_REGEX = re.compile(r'\\\s*H\s*F\s*=\s*([^\\]*)\\')
+MP2_REGEX = re.compile(r'\\\s*M\s*\s*P\s*\s*2\s*=\s*([^\\]*)\\')
 
 LOG = logging.getLogger(__name__)
 
@@ -33,15 +37,17 @@ class G09LogFile:
         finding it in the log file if it is not already set"""
         if self._scf_energy is None:
             LOG.debug('Trying to find SCF energy in %s', self._filename)
-            for i, line in enumerate(self.contents, 1):
-                if line.startswith(' SCF Done:'):
-                    try:
-                        self._scf_energy = G09LogFile.parse_scf_energy_line(line)
-                    except(LineFormatError) as line_error:
-                        raise FileFormatError(self._filename, i, line_error)
-                    break
-            else:
-                raise FileFormatError(self._filename, i,
+            text = ''.join(self.contents)
+            match = re.search(HF_REGEX, text)
+            if match:
+                self._scf_energy = float(''.join(match.group(1).split()))
+
+            match = re.search(MP2_REGEX, text)
+            if match:
+                self._scf_energy = float(''.join(match.group(1).split()))
+
+            if not self._scf_energy:
+                raise FileFormatError(self._filename, len(self.contents),
                                       "reached end of file without SCF energy")
         return self._scf_energy
 
