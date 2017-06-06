@@ -13,7 +13,7 @@ from collections import defaultdict
 
 HAVE_DFTD3_CORRECTION = False
 try:
-    from dftd3 import d3_correction
+    from dftd3 import d3_correction, parameters
     HAVE_DFTD3_CORRECTION = True
 except ModuleNotFoundError as e:
     pass
@@ -173,11 +173,14 @@ def read_outputs(directories, systems, *, suffix='.log', expected=1):
             if HAVE_DFTD3_CORRECTION:
                 if not proto.includes_dispersion:
                     s = systems[f.stem]
-                    d3, _ = d3_correction(s.as_atomic_numbers(),
-                                          s.as_coordinate_matrix(units='bohr'),
-                                          func=d.name)
-                    LOG.debug("Dispersion correction for %s (%s): %s hartree", f.stem, d.name, d3)
-                    energies[d.name + '-d3bj'][f.stem] = l.scf_energy + d3
+                    if d.name in parameters['bj'].keys():
+                        d3, _ = d3_correction(s.as_atomic_numbers(),
+                                              s.as_coordinate_matrix(units='bohr'),
+                                              func=d.name)
+                        LOG.debug("Dispersion correction for %s (%s): %s hartree", f.stem, d.name, d3)
+                        energies[d.name + ' + d3(bj)'][f.stem] = l.scf_energy + d3
+                    else:
+                        LOG.debug('No parameters for %s', d.name)
 
             if d.name == 'mp2':
                 dependents = {n: p for n, p in available_protocols.items() if p.redundancy == 'mp2'}
