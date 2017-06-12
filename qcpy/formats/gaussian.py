@@ -62,6 +62,7 @@ class G09LogFile:
     def parse_spin_component_line(line):
         tokens = line.strip().split()
         kind = tokens[0]
+        LOG.debug('Tokens in spin component line%s', tokens)
         t2 = float(tokens[3].replace('D', 'E'))
         e2 = float(tokens[-1].replace('D', 'E'))
         return kind, t2, e2
@@ -78,10 +79,10 @@ class G09LogFile:
                 if line.strip().startswith('Spin components'):
                     try:
                         for j in range(3):
-                            kind, t2, et =\
+                            kind, t2, e2 =\
                                     G09LogFile.parse_spin_component_line(self.contents[i + j])
                             self._spin_components[kind]['t2'] = t2
-                            self._spin_components[kind]['e2'] = t2
+                            self._spin_components[kind]['e2'] = e2
                     except(LineFormatError) as line_error:
                         raise FileFormatError(self._filename, i, line_error)
                     break

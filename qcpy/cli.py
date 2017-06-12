@@ -8,6 +8,7 @@ from pathlib import Path
 from qcpy.geometry import Geometry
 from qcpy.jobs.gaussian import available_protocols, GaussianJob
 from qcpy.formats.gaussian import G09LogFile
+from qcpy.formats import FileFormatError
 from qcpy.utils import scs_e2_correction
 from collections import defaultdict
 
@@ -87,7 +88,7 @@ def guess_geometry_dir(path):
             return path_guess
     return None
 
-def read_systems(path, required_geometries, *, prefix='', suffix='.xyz', copy_to=None):
+def read_systems(path, required_geometries, *, prefix='', suffix='.xyz', copy_to=None, progress=True):
     """Add the systems to the database"""
     app_root = 'qcdb'
     systems = {}
@@ -98,7 +99,7 @@ def read_systems(path, required_geometries, *, prefix='', suffix='.xyz', copy_to
         return None
 
     geometry_files = list(map(lambda x: Path(geometry_dir, x).with_suffix(suffix), required_geometries))
-    with tqdm(total=len(geometry_files), unit='systems', desc='Reading geometries') as pbar:
+    with tqdm(total=len(geometry_files), unit='systems', desc='Reading geometries', disable=(not progress)) as pbar:
         for f in geometry_files:
             geometry = Geometry.from_xyz_file(f, parse_comments=True)
             systems[f.stem] = geometry
@@ -122,7 +123,7 @@ def read_reactions(reactions, systems, *, prefix='', suffix='.xyz'):
     return r
 
 
-def create_input_files(root, systems, basis_set):
+def create_input_files(root, systems, basis_set, *, progress=True):
     LOG.debug('Systems = %s', systems)
     io = Path(root, 'calcs')
     skipped = defaultdict(list)
@@ -134,7 +135,8 @@ def create_input_files(root, systems, basis_set):
 
     with tqdm(total=len(systems) * len(all_methods),
               desc='Writing input files',
-              unit='gjf') as pbar:
+              unit='gjf',
+              disable=(not progress)) as pbar:
         sys = systems.items()
         for protocol_name in all_methods:
             protocol = available_protocols[protocol_name]
@@ -158,36 +160,48 @@ def create_input_files(root, systems, basis_set):
     return skipped
 
 
-def read_outputs(directories, systems, *, suffix='.log', expected=1):
+def read_outputs(directories, systems, *, suffix='.log', expected=1, progress=True):
     energies = defaultdict(dict)
-    for d in tqdm(directories, desc='Reading calculations', unit='protocol'):
+
+    for d in tqdm(directories, desc='Reading calculations', unit='protocol', disable=(not progress)):
         log_files = list(d.glob('*{}'.format(suffix)))
         if len(log_files) < expected:
             LOG.warn('Less log files than expected in %s (%d/%d)',
                      d, len(log_files), 4)
-        proto = available_protocols[d.name]
-        for f in tqdm(log_files, desc='Reading job files', unit='gjf'):
+        try:
+            proto = available_protocols[d.name]
+        except KeyError as e:
+            LOG.warn('Unknown protocol %s', d.name)
+            continue
+
+        for f in tqdm(log_files, desc='Reading job files', unit='gjf',
+                      disable=(not progress)):
             l = G09LogFile(f)
-            energies[d.name][f.stem] = l.scf_energy
+            try:
+                energies[d.name][f.stem] = l.scf_energy
+                if HAVE_DFTD3_CORRECTION:
+                    if not proto.includes_dispersion:
+                        s = systems[f.stem]
+                        if d.name in parameters['bj'].keys():
+                            d3, _ = d3_correction(s.as_atomic_numbers(),
+                                                  s.as_coordinate_matrix(units='bohr'),
+                                                  func=d.name)
+                            LOG.debug("Dispersion correction for %s (%s): %s hartree", f.stem, d.name, d3)
+                            energies[d.name + ' + d3(bj)'][f.stem] = l.scf_energy + d3
+                        else:
+                            LOG.debug('No parameters for %s', d.name)
 
-            if HAVE_DFTD3_CORRECTION:
-                if not proto.includes_dispersion:
-                    s = systems[f.stem]
-                    if d.name in parameters['bj'].keys():
-                        d3, _ = d3_correction(s.as_atomic_numbers(),
-                                              s.as_coordinate_matrix(units='bohr'),
-                                              func=d.name)
-                        LOG.debug("Dispersion correction for %s (%s): %s hartree", f.stem, d.name, d3)
-                        energies[d.name + ' + d3(bj)'][f.stem] = l.scf_energy + d3
-                    else:
-                        LOG.debug('No parameters for %s', d.name)
+                if d.name == 'mp2':
+                    dependents = {n: p for n, p in available_protocols.items() if p.redundancy == 'mp2'}
+                    for method, protocol in dependents.items():
+                        sc = l.mp2_spin_components
+                        correction = scs_e2_correction(sc, **protocol.correction)
+                        energies[method][f.stem] = l.scf_energy + correction
 
-            if d.name == 'mp2':
-                dependents = {n: p for n, p in available_protocols.items() if p.redundancy == 'mp2'}
-                for method, protocol in dependents.items():
-                    sc = l.mp2_spin_components
-                    correction = scs_e2_correction(sc, **protocol.correction)
-                    energies[method][f.stem] = l.scf_energy + correction
+            except FileFormatError as e:
+                LOG.warn('Missing SCF energy in %s', f)
+
+
     return energies
 
 
@@ -220,6 +234,9 @@ def generate_inputs():
                         help="Suffix when looking for geometry files")
     parser.add_argument('--log-level', default='WARN',
                         help='Level of log info to display')
+
+    parser.add_argument('--progress', default=False,
+                        help='Show progress bars')
     args = parser.parse_args()
 
     logging.basicConfig(format=LOG_FORMAT, level=args.log_level)
@@ -233,9 +250,10 @@ def generate_inputs():
     systems = read_systems(Path(args.directory),
                            required_geometries,
                            prefix=benchmark_info['benchmark'],
-                           suffix=args.file_suffix)
+                           suffix=args.file_suffix,
+                           progress=args.progress)
     reactions = read_reactions(benchmark_info['reactions'], systems, prefix=benchmark_info['benchmark'], suffix=args.file_suffix)
-    skipped = create_input_files(args.directory, systems, args.basis_set)
+    skipped = create_input_files(args.directory, systems, args.basis_set, progress=args.progress)
     benchmark_info['post process'] = skipped
     write_benchmark_info(info_file, benchmark_info)
 
@@ -259,6 +277,8 @@ def process_outputs():
                         help='Perform Grimme D3 corection for dft functionals')
     parser.add_argument('--output-directory', '-o', default=None,
                         help='Location to place resulting/output files')
+    parser.add_argument('--progress', default=False,
+                        help='Show progress bars')
     args = parser.parse_args()
 
     # set the output directory to default if not set
@@ -283,12 +303,13 @@ def process_outputs():
     systems = read_systems(Path(args.directory),
                            required_geometries,
                            prefix=benchmark_info['benchmark'],
-                           copy_to=copy_to)
+                           copy_to=copy_to,
+                           progress=args.progress)
 
 
     subdirs = [p for p in Path(args.directory, 'calcs').iterdir() if p.is_dir()]
     t1 = time.time()
-    energies = read_outputs(subdirs, systems, expected=len(required_geometries))
+    energies = read_outputs(subdirs, systems, expected=len(required_geometries), progress=args.progress)
     t2 = time.time()
     LOG.debug('%s energies in %s s', len(energies) * len(systems), (t2-t1))
     write_benchmark_info(Path(args.output_directory, 'energies.json'),
@@ -299,8 +320,11 @@ def process_outputs():
     reaction_energies = defaultdict(dict)
     for reaction, stoich in reactions.items():
         for method_name, sp_energies in energies.items():
-            reaction_energies[reaction][method_name] = \
-                    sum(sp_energies[s] * n for s, n in stoich)
+            try:
+                reaction_energies[reaction][method_name] = \
+                        sum(sp_energies[s] * n for s, n in stoich)
+            except KeyError as e:
+                LOG.warn('Missing single point energy method=%s, system=%s', method_name, e)
 
     write_benchmark_info(Path(args.output_directory, 'reaction_energies.json'),
                          reaction_energies)
