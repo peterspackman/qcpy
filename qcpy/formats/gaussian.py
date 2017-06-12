@@ -17,6 +17,7 @@ class G09LogFile:
     _filename = ""
     _contents = []
     _scf_energy = None
+    _hf_energy = None
     _spin_components = None
 
     def __init__(self, path):
@@ -50,6 +51,23 @@ class G09LogFile:
                 raise FileFormatError(self._filename, len(self.contents),
                                       "reached end of file without SCF energy")
         return self._scf_energy
+
+    @property
+    def hf_energy(self):
+        """Return the SCF energy of this calculation,
+        finding it in the log file if it is not already set"""
+        if self._hf_energy is None:
+            LOG.debug('Trying to find SCF energy in %s', self._filename)
+            text = ''.join(self.contents)
+            match = re.search(HF_REGEX, text)
+            if match:
+                self._hf_energy = float(''.join(match.group(1).split()))
+            if not self._scf_energy:
+                raise FileFormatError(self._filename, len(self.contents),
+                                      "reached end of file without SCF energy")
+        return self._hf_energy
+
+
 
     @staticmethod
     def parse_scf_energy_line(line):

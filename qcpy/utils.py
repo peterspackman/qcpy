@@ -1,6 +1,9 @@
 """Misc utility functions/classes"""
 import os
 import numpy as np
+import logging
+
+LOG = logging.getLogger(__name__)
 
 
 class working_directory:
@@ -49,9 +52,10 @@ def scs_e2_correction(components, *, a=1.0, b=1.0):
     """Calculate the correction component to the MP2
     energy in the form a * OS + b * SS where
     OS = alpha-beta and SS = alpha-alpha + beta-beta"""
-    OS = components['alpha-beta']['e2']
-    SS = components['alpha-alpha']['e2'] + components['beta-beta']['e2']
-    return a*OS + b*SS
+    opposite_spin = components['alpha-beta']['e2']
+    same_spin = components['alpha-alpha']['e2'] + components['beta-beta']['e2']
+    correction = a * opposite_spin + b * same_spin
+    return correction
 
 
 def d3_correction():

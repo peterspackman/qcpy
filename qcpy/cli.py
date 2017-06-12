@@ -56,7 +56,7 @@ benchmark_protocols = {
     ],
     'AI': [
         'hf', 'mp2', 'scs-mp2', 'sos-mp2', 's2-mp', 'scs(mi)-mp2',
-        'scs-mp2-vdw'
+        'scs-mp2-vdw', 'scsn-mp2'
     ]
 }
 
@@ -193,10 +193,14 @@ def read_outputs(directories, systems, *, suffix='.log', expected=1, progress=Tr
 
                 if d.name == 'mp2':
                     dependents = {n: p for n, p in available_protocols.items() if p.redundancy == 'mp2'}
+                    e_hf = l.hf_energy
+                    sc = l.mp2_spin_components
+                    LOG.info('E(%s,mp2) = %s', f.stem, l.scf_energy)
                     for method, protocol in dependents.items():
-                        sc = l.mp2_spin_components
                         correction = scs_e2_correction(sc, **protocol.correction)
-                        energies[method][f.stem] = l.scf_energy + correction
+                        energies[method][f.stem] = e_hf + correction
+                        LOG.info('E(%s,%s) = %s + %s = %s', f.stem, method, e_hf,
+                                 correction, energies[method][f.stem])
 
             except FileFormatError as e:
                 LOG.warn('Missing SCF energy in %s', f)
