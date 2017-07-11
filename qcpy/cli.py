@@ -116,6 +116,7 @@ def read_reactions(reactions, systems, *, prefix='', suffix='.xyz'):
     for reaction, info in reactions.items():
         LOG.debug('Processing reaction %s', reaction)
         sys_names = info['reactants'][1] + info['products'][1]
+        LOG.debug('systems: %s', sys_names)
         reaction_systems = [systems[rsuffix(x,suffix)] for x in sys_names]
         LOG.debug('Contains %s', reaction_systems)
         stoichiometry = [-x for x in info['reactants'][0]] + info['products'][0]
@@ -256,6 +257,7 @@ def generate_inputs():
                            prefix=benchmark_info['benchmark'],
                            suffix=args.file_suffix,
                            progress=args.progress)
+    LOG.debug('Systems: %s', systems)
     reactions = read_reactions(benchmark_info['reactions'], systems, prefix=benchmark_info['benchmark'], suffix=args.file_suffix)
     skipped = create_input_files(args.directory, systems, args.basis_set, progress=args.progress)
     benchmark_info['post process'] = skipped

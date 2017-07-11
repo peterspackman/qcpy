@@ -31,9 +31,15 @@ class XYZFile:
         self.multiplicity = 1
         if parse_comments:
             if self.comment.strip() != "":
-                comments = json.loads(self.comment)
-                self.charge = comments['charge']
-                self.multiplicity = comments['multiplicity']
+                try:
+                    comments = json.loads(self.comment)
+                    self.charge = comments['charge']
+                    self.multiplicity = comments['multiplicity']
+                except Exception as e:
+                    tokens = self.comment.split()
+                    if len(tokens) == 2:
+                        self.charge = int(tokens[0])
+                        self.multiplicity = int(tokens[1])
 
 
 
