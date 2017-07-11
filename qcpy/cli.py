@@ -247,7 +247,7 @@ def generate_inputs():
     logging.basicConfig(format=LOG_FORMAT, level=args.log_level)
     info_file = Path(args.directory, 'info.json')
     LOG.debug('Reading benchmark file from %s', info_file)
-    benchmark_info = read_benchmark_info(info_file)
+    benchmark_info = read_benchmark_info(str(info_file))
     required_geometries = get_required_geometries(benchmark_info, suffix=args.file_suffix)
     LOG.info('%d geometry files required for all reactions', len(required_geometries))
     LOG.debug("Required geometries: %s", required_geometries)
