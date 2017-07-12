@@ -98,7 +98,7 @@ def read_systems(path, required_geometries, *, prefix='', suffix='.xyz', copy_to
         LOG.error('Could not locate geometries')
         return None
 
-    geometry_files = list(map(lambda x: Path(geometry_dir, x).with_suffix(suffix), required_geometries))
+    geometry_files = list(map(lambda x: Path(geometry_dir, x+'.xyz'), required_geometries))
     with tqdm(total=len(geometry_files), unit='systems', desc='Reading geometries', disable=(not progress)) as pbar:
         for f in geometry_files:
             geometry = Geometry.from_xyz_file(f, parse_comments=True)
@@ -261,7 +261,7 @@ def generate_inputs():
     reactions = read_reactions(benchmark_info['reactions'], systems, prefix=benchmark_info['benchmark'], suffix=args.file_suffix)
     skipped = create_input_files(args.directory, systems, args.basis_set, progress=args.progress)
     benchmark_info['post process'] = skipped
-    write_benchmark_info(info_file, benchmark_info)
+    write_benchmark_info(str(info_file), benchmark_info)
 
 
 def process_outputs():
