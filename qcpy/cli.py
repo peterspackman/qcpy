@@ -56,7 +56,7 @@ benchmark_protocols = {
     ],
     'HF': [
         'hf',
-    ]
+    ],
     'POSTHF': [
         'mp2', 'scs-mp2', 'sos-mp2', 's2-mp', 'scs(mi)-mp2',
         'scs-mp2-vdw', 'scsn-mp2'
