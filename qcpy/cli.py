@@ -54,8 +54,11 @@ benchmark_protocols = {
         'wb97xd', 'n12sx', 'm11', 'mn12sx', 'lc-blyp', 'lc-pbepbe',
         'lc-bp86', 'lc-bpw91'
     ],
-    'AI': [
-        'hf', 'mp2', 'scs-mp2', 'sos-mp2', 's2-mp', 'scs(mi)-mp2',
+    'HF': [
+        'hf',
+    ]
+    'POSTHF': [
+        'mp2', 'scs-mp2', 'sos-mp2', 's2-mp', 'scs(mi)-mp2',
         'scs-mp2-vdw', 'scsn-mp2'
     ]
 }
@@ -181,7 +184,7 @@ def read_outputs(directories, systems, *, suffix='.log', expected=1, progress=Tr
             try:
                 energies[d.name][f.stem] = l.scf_energy
                 if HAVE_DFTD3_CORRECTION:
-                    if not proto.includes_dispersion:
+                    if not (proto.includes_dispersion or d.name in already_dispersion_corrected):
                         s = systems[f.stem]
                         if d.name in parameters['bj'].keys():
                             d3, _ = d3_correction(s.as_atomic_numbers(),
