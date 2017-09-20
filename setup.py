@@ -24,7 +24,8 @@ setup(name='qcpy',
       entry_points={
           'console_scripts': [
               'chembench-init = qcpy.cli:generate_inputs',
-              'chembench-process = qcpy.cli:process_outputs'
+              'chembench-process = qcpy.cli:process_outputs_main',
+              'chembench-process-batch = qcpy.cli:process_outputs_batch'
           ]
       },
       install_requires=['numpy', 'jinja2', 'tqdm'],

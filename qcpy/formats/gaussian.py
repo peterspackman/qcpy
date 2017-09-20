@@ -9,6 +9,7 @@ from collections import defaultdict
 
 HF_REGEX = re.compile(r'\\\s*H\s*F\s*=\s*([^\\]*)\\')
 MP2_REGEX = re.compile(r'\\\s*M\s*\s*P\s*\s*2\s*=\s*([^\\]*)\\')
+CONVERGENCE_FAIL_STRING = '>>>>>>>>>> Convergence criterion not met'
 
 LOG = logging.getLogger(__name__)
 
@@ -19,6 +20,8 @@ class G09LogFile:
     _scf_energy = None
     _hf_energy = None
     _spin_components = None
+    _cycles = None
+    _converged = None
 
     def __init__(self, path):
         if not isinstance(path, Path):
@@ -53,6 +56,34 @@ class G09LogFile:
         return self._scf_energy
 
     @property
+    def converged(self):
+        """Return whether or not this calculation converged"""
+        did_not_converge = False
+        energy_lines = []
+        energies = []
+        if self._converged is None:
+            LOG.debug('Testing convergence in %s', self._filename)
+            text = ''.join(self.contents)
+            for line in self.contents:
+                if line.startswith(' SCF Done'):
+                    energy_lines.append(line)
+                elif (CONVERGENCE_FAIL_STRING in line):
+                    did_not_converge = True
+            self._converged = True
+            if did_not_converge:
+                # only convert if we found a lack of convergence
+                for line in energy_lines:
+                    tokens = line.split('=')[1].split()
+                    energies.append(float(tokens[0]))
+                if len(energies) < 2:
+                    self._converged = False
+                # if there is more than a 30% difference between the two values
+                # the convergence is not acceptable
+                elif abs(1.0 - energies[1]/energies[0]) > 0.3:
+                    self._converged = False
+        return self._converged
+
+    @property
     def hf_energy(self):
         """Return the SCF energy of this calculation,
         finding it in the log file if it is not already set"""
@@ -67,7 +98,23 @@ class G09LogFile:
                                       "reached end of file without SCF energy")
         return self._hf_energy
 
-
+    def scf_convergence(self):
+        if self._cycles is None:
+            LOG.debug('Trying to find scf_convergence in %s', self._filename)
+            labels = []
+            values = []
+            for line in self._contents:
+                if line.strip().startswith('Cycle'):
+                    n = int(line.split()[1])
+                if line.strip().startswith('E='):
+                    energy = float(line.split()[1])
+                    labels.append(n)
+                    values.append(energy)
+            self._cycles = labels, values
+            if not self._cycles:
+                raise FileFormatError(self._filename, len(self.contents),
+                                      "reached end of file SCF finding SCF convergence")
+        return self._cycles
 
     @staticmethod
     def parse_scf_energy_line(line):

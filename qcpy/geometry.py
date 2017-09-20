@@ -33,12 +33,15 @@ class Geometry:
     charge = 0
     multiplicity = 1
     _molecular_formula = ""
+    comment = ""
 
     def __init__(self, atoms: List[Atom], *, charge: int = 0,
-                 multiplicity: int = 1):
+                 multiplicity: int = 1,
+                 comment: str = ""):
         self.atoms = atoms
         self.charge = charge
         self.multiplicity = multiplicity
+        self.comment = comment
 
     @staticmethod
     def from_xyz_file(filename, parse_comments=False):
@@ -46,7 +49,8 @@ class Geometry:
         xyz = XYZFile(filename, parse_comments)
         return Geometry(atoms=xyz.atoms,
                         charge=xyz.charge,
-                        multiplicity=xyz.multiplicity)
+                        multiplicity=xyz.multiplicity,
+                        comment=xyz.comment)
 
     @property
     def elements(self) -> List[Element]:
@@ -97,6 +101,10 @@ class Geometry:
     def move(self, vec):
         for atom in self.atoms:
             atom._center = Coordinates(atom.center.array + vec)
+
+    def rescale(self, scale=Bohr):
+        for atom in self.atoms:
+            atom._center = Coordinates(atom.center.array * scale)
 
     @property
     def centroid(self):

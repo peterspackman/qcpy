@@ -4,6 +4,8 @@ import logging
 import json
 import os
 import shutil
+import time
+import sys
 from pathlib import Path
 from qcpy.geometry import Geometry
 from qcpy.jobs.gaussian import available_protocols, GaussianJob
@@ -31,7 +33,7 @@ benchmark_protocols = {
         'bp86', 'bpw91', 'sogga11', 'n12'
     ],
     'MGGA': [
-        'mo6l', 'tpsstpss', 'thcth', 'vsxc', 'bb95',
+        'm06l', 'tpsstpss', 'thcth', 'vsxc', 'bb95',
         'm11l', 'mn12l', 'mn15l'
     ],
     'HGGA': [
@@ -164,51 +166,70 @@ def create_input_files(root, systems, basis_set, *, progress=True):
     return skipped
 
 
-def read_outputs(directories, systems, *, suffix='.log', expected=1, progress=True):
+def add_d3_correction_value(l, protocol_name, system_name, protocol, energies, systems):
+    """Add a dispersion corrected value if necessary"""
+    if not (protocol.includes_dispersion or \
+            protocol_name in already_dispersion_corrected):
+        try:
+            s = systems[system_name]
+        except KeyError as e:
+            LOG.error('Could not find file %s', f)
+            sys.exit(1)
+        if protocol_name in parameters['bj'].keys():
+            d3, _ = d3_correction(s.as_atomic_numbers(),
+                                  s.as_coordinate_matrix(units='bohr'),
+                                  func=protocol_name)
+            LOG.debug("Dispersion correction for %s (%s): %s hartree",
+                      system_name, protocol_name, d3)
+            energies[protocol_name + ' + d3(bj)'][system_name] = l.scf_energy + d3
+        else:
+            LOG.debug('No parameters for %s', protocol_name)
+
+
+def add_mp2_variants(system_name, l, energies):
+    dependents = {n: p for n, p in available_protocols.items() if p.redundancy == 'mp2'}
+    e_hf = l.hf_energy
+    sc = l.mp2_spin_components
+    LOG.debug('E(%s,mp2) = %s', system_name, l.scf_energy)
+    for method, protocol in dependents.items():
+        correction = scs_e2_correction(sc, **protocol.correction)
+        energies[method][system_name] = e_hf + correction
+        LOG.debug('E(%s,%s) = %s + %s = %s', system_name, method, e_hf,
+                  correction, energies[method][system_name])
+
+
+def read_outputs(directories, systems, pbar, *, suffix='.log', expected=1):
     energies = defaultdict(dict)
 
-    for d in tqdm(directories, desc='Reading calculations', unit='protocol', disable=(not progress)):
-        log_files = list(d.glob('*{}'.format(suffix)))
+    for d in directories:
+        log_files = [f for f in d.iterdir() if f.name.endswith(suffix)]
+        protocol_name = d.name
+
         if len(log_files) < expected:
             LOG.warn('Less log files than expected in %s (%d/%d)',
-                     d, len(log_files), 4)
+                     d, len(log_files), expected)
         try:
-            proto = available_protocols[d.name]
+            proto = available_protocols[protocol_name]
         except KeyError as e:
-            LOG.warn('Unknown protocol %s', d.name)
+            LOG.warn('Unknown protocol %s', protocol_name)
             continue
-
-        for f in tqdm(log_files, desc='Reading job files', unit='gjf',
-                      disable=(not progress)):
+        for f in log_files:
             l = G09LogFile(f)
-            try:
-                energies[d.name][f.stem] = l.scf_energy
-                if HAVE_DFTD3_CORRECTION:
-                    if not (proto.includes_dispersion or d.name in already_dispersion_corrected):
-                        s = systems[f.stem]
-                        if d.name in parameters['bj'].keys():
-                            d3, _ = d3_correction(s.as_atomic_numbers(),
-                                                  s.as_coordinate_matrix(units='bohr'),
-                                                  func=d.name)
-                            LOG.debug("Dispersion correction for %s (%s): %s hartree", f.stem, d.name, d3)
-                            energies[d.name + ' + d3(bj)'][f.stem] = l.scf_energy + d3
-                        else:
-                            LOG.debug('No parameters for %s', d.name)
+            system_name = f.stem
+            if l.converged:
+                try:
+                    energies[protocol_name][system_name] = l.scf_energy
+                    if HAVE_DFTD3_CORRECTION:
+                        add_d3_correction_value(l, protocol_name, system_name, proto, energies, systems)
+                        
+                    if protocol_name == 'mp2':
+                        add_mp2_variants(system_name, l, energies)
 
-                if d.name == 'mp2':
-                    dependents = {n: p for n, p in available_protocols.items() if p.redundancy == 'mp2'}
-                    e_hf = l.hf_energy
-                    sc = l.mp2_spin_components
-                    LOG.info('E(%s,mp2) = %s', f.stem, l.scf_energy)
-                    for method, protocol in dependents.items():
-                        correction = scs_e2_correction(sc, **protocol.correction)
-                        energies[method][f.stem] = e_hf + correction
-                        LOG.info('E(%s,%s) = %s + %s = %s', f.stem, method, e_hf,
-                                 correction, energies[method][f.stem])
-
-            except FileFormatError as e:
-                LOG.warn('Missing SCF energy in %s', f)
-
+                except FileFormatError as e:
+                    LOG.warn('Invalid G09 log file %s: %s', f, e)
+            else:
+                LOG.warn('Ignoring %s as SCF did not converge', f)
+            pbar.update(f.stat().st_size)
 
     return energies
 
@@ -267,61 +288,48 @@ def generate_inputs():
     write_benchmark_info(str(info_file), benchmark_info)
 
 
-def process_outputs():
-    """ Main method to process output files from g09 calculations
-    Assumes directory structure is as the output from generate_inputs would
-    leave.
-
-    """
-    import argparse
-    import time
-    parser = argparse.ArgumentParser()
-    parser.add_argument('directory', default='.', 
-                        help='Path in which to look for input')
-    parser.add_argument('-s', '--file-suffix', default='.log',
-                        help="Suffix when looking for output files")
-    parser.add_argument('--log-level', default='WARN',
-                        help='Level of log info to display')
-    parser.add_argument('--d3-correction', default='d3bj',
-                        help='Perform Grimme D3 corection for dft functionals')
-    parser.add_argument('--output-directory', '-o', default=None,
-                        help='Location to place resulting/output files')
-    parser.add_argument('--progress', default=False,
-                        help='Show progress bars')
-    args = parser.parse_args()
-
-    # set the output directory to default if not set
-
-    logging.basicConfig(format=LOG_FORMAT, level=args.log_level)
-
-    info_file = Path(args.directory, 'info.json')
+def process_outputs(directory, output_directory, progress=False, overwrite=False):
+    info_file = Path(directory, 'info.json')
+    if not overwrite:
+        if Path(directory, 'reaction_energies.json').exists():
+            LOG.info('Skipping %s, already processed', directory)
+            return
 
     benchmark_info = read_benchmark_info(info_file)
     benchmark_name = benchmark_info['benchmark']
     required_geometries = get_required_geometries(benchmark_info)
     copy_to = None
 
-    if args.output_directory is not None:
-        Path(args.output_directory).mkdir()
-        shutil.copy(info_file, Path(args.output_directory, 'info.json'))
-        copy_to = Path(args.output_directory, 'xyz')
+    if output_directory is not None:
+        Path(output_directory).mkdir()
+        shutil.copy(info_file, Path(output_directory, 'info.json'))
+        copy_to = Path(output_directory, 'xyz')
         copy_to.mkdir()
     else:
-        args.output_directory = args.directory
+        output_directory = directory
 
-    systems = read_systems(Path(args.directory),
+    systems = read_systems(Path(directory),
                            required_geometries,
                            prefix=benchmark_info['benchmark'],
                            copy_to=copy_to,
-                           progress=args.progress)
+                           progress=progress)
 
 
-    subdirs = [p for p in Path(args.directory, 'calcs').iterdir() if p.is_dir()]
+    subdirs = [p for p in Path(directory, 'calcs').iterdir() if p.is_dir()]
     t1 = time.time()
-    energies = read_outputs(subdirs, systems, expected=len(required_geometries), progress=args.progress)
+    size_counter = 0
+    suffix = '.log'
+    for d in tqdm(subdirs, desc='Calculating size', disable=(not progress)):
+        for f in d.iterdir():
+            if f.name.endswith(suffix):
+                size_counter += f.stat().st_size
+
+    with tqdm(total=size_counter, desc='Reading energies', unit='B', unit_scale=True,
+              disable=(not progress)) as pbar:
+        energies = read_outputs(subdirs, systems, pbar, expected=len(required_geometries))
     t2 = time.time()
     LOG.debug('%s energies in %s s', len(energies) * len(systems), (t2-t1))
-    write_benchmark_info(Path(args.output_directory, 'energies.json'),
+    write_benchmark_info(Path(output_directory, 'energies.json'),
                          energies)
     reactions = read_reactions(benchmark_info['reactions'],
                                systems, prefix=benchmark_info['benchmark'])
@@ -332,9 +340,73 @@ def process_outputs():
             try:
                 reaction_energies[reaction][method_name] = \
                         sum(sp_energies[s] * n for s, n in stoich)
+                LOG.debug('Energy for %s/%s: %d', reaction, method_name, reaction_energies[reaction][method_name])
             except KeyError as e:
-                LOG.warn('Missing single point energy method=%s, system=%s', method_name, e)
+                LOG.debug('Missing single point energy method=%s, system=%s', method_name, e)
 
-    write_benchmark_info(Path(args.output_directory, 'reaction_energies.json'),
+    write_benchmark_info(Path(output_directory, 'reaction_energies.json'),
                          reaction_energies)
 
+
+def process_outputs_main():
+    """ Main method to process output files from g09 calculations
+    Assumes directory structure is as the output from generate_inputs would
+    leave.
+
+    """
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('directory', default='.', 
+                        help='Path in which to look for input')
+    parser.add_argument('-s', '--file-suffix', default='.log',
+                        help="Suffix when looking for output files")
+    parser.add_argument('--log-level', default='WARN',
+                        help='Level of log info to display')
+    parser.add_argument('--d3-correction', default='d3bj',
+                        help='Perform Grimme D3 correction for dft functionals')
+    parser.add_argument('--output-directory', '-o', default=None,
+                        help='Location to place resulting/output files')
+    parser.add_argument('--progress', default=False,
+                        help='Show progress bars')
+    args = parser.parse_args()
+
+    # set the output directory to default if not set
+
+    logging.basicConfig(format=LOG_FORMAT, level=args.log_level)
+
+    process_outputs(args.directory, args.output_directory, progress=args.progress)
+
+
+def process_outputs_batch():
+    """ Main method to process output files from g09 calculations
+    Assumes directory structure is as the output from generate_inputs would
+    leave.
+
+    """
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('directory', default='.', 
+                        help='Path in which to look for input')
+    parser.add_argument('-s', '--file-suffix', default='.log',
+                        help="Suffix when looking for output files")
+    parser.add_argument('--log-level', default='WARN',
+                        help='Level of log info to display')
+    parser.add_argument('--d3-correction', default='d3bj',
+                        help='Perform Grimme D3 correction for dft functionals')
+    parser.add_argument('--log-to', default=None,
+                        help='Log to a file')
+    parser.add_argument('--progress', default=False,
+                        help='Show progress bars')
+    parser.add_argument('--overwrite', default=False,
+                        help='Overwrite previous processing results')
+    args = parser.parse_args()
+
+    # set the output directory to default if not set
+
+    logging.basicConfig(filename=args.log_to, format=LOG_FORMAT, level=args.log_level)
+
+    for directory in tqdm(list(Path(args.directory).iterdir()),
+                          desc='Benchmark directories',
+                          unit='dir', disable=(not args.progress)):
+        if directory.is_dir():
+            process_outputs(directory, None, progress=args.progress, overwrite=args.overwrite)

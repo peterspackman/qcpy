@@ -45,6 +45,7 @@ correlation_functionals = [
 pure_functionals = [
     'vsxc', 'hcth', 'hcth93', 'hcth147', 'hcth407', 'thcth', 'mo6l',
     'b97', 'b97d', 'b97d3', 'sogga11', 'm11l', 'n12', 'mn12l', 'mn15l',
+    'm06l'
 ]
 
 hybrids = [
