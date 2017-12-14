@@ -93,6 +93,8 @@ def parse_atom_line(line, **kwargs):
         msg = "incorrect number of tokens (found {}, expected {})".format(len(tokens), 4)
         raise LineFormatError(msg)
     center = float(tokens[1]), float(tokens[2]), float(tokens[3])
+    if tokens[0] == 'D':
+        tokens[0] = 'H'
 
     try:
         atom = Atom.from_symbol_and_location(tokens[0], Coordinates(*center))

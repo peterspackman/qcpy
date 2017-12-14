@@ -2,6 +2,7 @@
 Store all the desired info about an atom in a molecule etc
 """
 from .element import periodictable
+from .coordinates import Coordinates
 
 
 class Atom:
@@ -17,13 +18,20 @@ class Atom:
 
     def __init__(self, element, center):
         self._element = element
-        self._center = center
+        self._center = Coordinates(center)
 
     @staticmethod
     def from_symbol_and_location(symbol, center):
         """ Create a new Atom from a given atomic symbol and coordinates
         """
         return Atom(periodictable[symbol], center=center)
+
+    @staticmethod
+    def from_number_and_location(number, center):
+        """ Create a new Atom from a given atomic symbol and coordinates
+        """
+        return Atom(periodictable[number], center=center)
+
 
     @property
     def element(self):

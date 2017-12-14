@@ -24,7 +24,10 @@ class Coordinates:
             for i, arg in enumerate(args):
                 self._array[i] = arg
         elif len(args) == 1:
-            self._array = args[0]
+            if isinstance(args[0], Coordinates):
+                self._array = args[0]._array
+            else:
+                self._array = args[0]
         # if x, y, z kwargs are present, set the array values
         if set(('x', 'y', 'z')) <= set(kwargs):
             self._array[0] = kwargs['x']
