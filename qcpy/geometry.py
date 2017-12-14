@@ -141,10 +141,10 @@ class Geometry:
         return np.cross(ax1, ax2)
 
 
-    def split(self, fragments):
+    def split(self, frags):
         """Split this geometry into fragments based on number of atoms"""
         fragments = []
-        for l, u in fragments:
+        for l, u in frags:
             g = Geometry(atoms=self.atoms[l:u],
                         comment=self.comment + 'fragment ' + i)
             fragments.append(g)
