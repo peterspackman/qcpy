@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='qcpy',
-      version='0.2.1',
+      version='0.2.2',
       description='Tools for automating running quantum chemistry jobs',
       url='http://github.com/peterspackman/qcauto',
       author='Peter Spackman',
