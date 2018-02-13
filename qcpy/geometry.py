@@ -144,9 +144,9 @@ class Geometry:
     def split(self, frags):
         """Split this geometry into fragments based on number of atoms"""
         fragments = []
-        for l, u in frags:
+        for i, (l, u) in enumerate(frags):
             g = Geometry(atoms=self.atoms[l:u],
-                        comment=self.comment + 'fragment ' + i)
+                        comment=self.comment + 'fragment {}'.format(i+1))
             fragments.append(g)
         return fragments
 

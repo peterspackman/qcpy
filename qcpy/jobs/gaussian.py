@@ -13,11 +13,11 @@ D3BJ = 'EmpiricalDispersion=GD3BJ'
 
 
 
-class UnknownProtocolError(Exception):
+class UnknownmethodError(Exception):
     pass
 
 
-class G09Protocol:
+class G09method:
     """Simple class representing a method available through
     g09"""
     def __init__(self, method, additional_keywords='', category='',
@@ -66,47 +66,47 @@ double_hybrids = [
     'mpw2plyp', 'dsdpbep86', 'pbe0dh', 'pbeq1dh'
 ]
 
-available_protocols = {
-    'b2gpplyp': G09Protocol('b2plyp', 'iop(3/125=0360003600,3/78=0640006400,'
+available_methods = {
+    'b2gpplyp': G09method('b2plyp', 'iop(3/125=0360003600,3/78=0640006400,'
                                       '3/76=0350006500,3/77=1000010000,5/33=1,3/124=-040)'),
-    'b2kplyp': G09Protocol('b2plyp',
+    'b2kplyp': G09method('b2plyp',
                            'iop(3/125=0420004200,3/76=0280007200,'
                            '3/78=0580005800,3/77=1000010000,5/33=1)'),
-    'b2tplyp': G09Protocol('b2plyp', 
+    'b2tplyp': G09method('b2plyp', 
                            'iop(3/125=0310003100,3/76=0400006000,'
                            '3/78=0690006900,3/77=1000010000,5/33=1)'),
-    'dsd-blyp': G09Protocol('b2plyp',
+    'dsd-blyp': G09method('b2plyp',
                             'iop(3/125=0400004600,3/76=0300007000,'
                             '3/78=0560005600,3/77=1000010000,5/33=1)'),
-    'dsd-pbep86': G09Protocol('b2plyp',
+    'dsd-pbep86': G09method('b2plyp',
                               'iop(3/125=0250005300,3/76=0300007000,'
                               '3/78=0430004300,3/74=1004,5/33=1)'),
-    'hf': G09Protocol('hf'),
-    'mp2': G09Protocol('mp2', includes_dispersion=True),
-    'mpw1b95': G09Protocol('mpwb95', 'iop(3/76=0690003100)'),
-    'mpwb1k': G09Protocol('mpwb95', 'iop(3/76=0560004400)'),
-    'pbe38': G09Protocol('pbepbe', 'iop(3/76=06250003750)'), # check this
-    'pbesol': G09Protocol('pbepbe', 'iop(3/74=5050)'), #
-    'scs-mp2': G09Protocol('mp2', redundancy='mp2', includes_dispersion=True,
+    'hf': G09method('hf'),
+    'mp2': G09method('mp2', includes_dispersion=True),
+    'mpw1b95': G09method('mpwb95', 'iop(3/76=0690003100)'),
+    'mpwb1k': G09method('mpwb95', 'iop(3/76=0560004400)'),
+    'pbe38': G09method('pbepbe', 'iop(3/76=06250003750)'), # check this
+    'pbesol': G09method('pbepbe', 'iop(3/74=5050)'), #
+    'scs-mp2': G09method('mp2', redundancy='mp2', includes_dispersion=True,
                            correction={'a': 1.200, 'b': 0.333}),
-    'sos-mp2': G09Protocol('mp2', redundancy='mp2', includes_dispersion=True,
+    'sos-mp2': G09method('mp2', redundancy='mp2', includes_dispersion=True,
                            correction={'a': 1.300, 'b': 0.000}),
-    'scs(mi)-mp2': G09Protocol('mp2', redundancy='mp2', includes_dispersion=True,
+    'scs(mi)-mp2': G09method('mp2', redundancy='mp2', includes_dispersion=True,
                                correction={'a': 0.400, 'b': 1.290}),
-    'scsn-mp2': G09Protocol('mp2', redundancy='mp2', includes_dispersion=True,
+    'scsn-mp2': G09method('mp2', redundancy='mp2', includes_dispersion=True,
                             correction={'a': 0.000, 'b': 1.760}),
-    'scs-mp2-vdw': G09Protocol('mp2', redundancy='mp2', includes_dispersion=True,
+    'scs-mp2-vdw': G09method('mp2', redundancy='mp2', includes_dispersion=True,
                                correction={'a': 1.280, 'b': 0.500}),
-    's2-mp': G09Protocol('mp2', redundancy='mp2', includes_dispersion=True,
+    's2-mp': G09method('mp2', redundancy='mp2', includes_dispersion=True,
                          correction={'a': 1.150, 'b': 0.750}),
 }
 
 for x in exchange_functionals:
     for c in correlation_functionals:
-        available_protocols[x+c] = G09Protocol(x+c)
+        available_methods[x+c] = G09method(x+c)
 
 for xc in pure_functionals + hybrids + rs_hybrids + double_hybrids:
-    available_protocols[xc] = G09Protocol(xc)
+    available_methods[xc] = G09method(xc)
 
 class GaussianJob(GeometryJob, InputFileJob):
     """Base class for all g09 jobs"""
@@ -139,12 +139,12 @@ class GaussianJob(GeometryJob, InputFileJob):
 
     def __init__(self, **kwargs):
         self.params.update(kwargs)
-        protocol = self.params['method'].lower()
+        method = self.params['method'].lower()
 
-        if not protocol in available_protocols:
-            raise(UnknownProtocolError(self.params['method']))
+        if not method in available_methods:
+            raise(UnknownmethodError(self.params['method']))
         else:
-            self.params['method'] = available_protocols[protocol]
+            self.params['method'] = available_methods[method]
 
         if not 'geometry' in self.params:
             raise Exception('GaussianJob requires a geometry')

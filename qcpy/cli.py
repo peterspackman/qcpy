@@ -8,7 +8,7 @@ import time
 import sys
 from pathlib import Path
 from qcpy.geometry import Geometry
-from qcpy.jobs.gaussian import available_protocols, GaussianJob
+from qcpy.jobs.gaussian import available_methods, GaussianJob
 from qcpy.formats.gaussian import G09LogFile
 from qcpy.formats import FileFormatError
 from qcpy.utils import scs_e2_correction
@@ -24,7 +24,7 @@ except ModuleNotFoundError as e:
 LOG_FORMAT = '[%(name)s]: %(message)s'
 LOG = logging.getLogger(__name__)
 
-benchmark_protocols = {
+benchmark_methods = {
     'LDA': [
         'svwn5'
     ],
@@ -137,62 +137,62 @@ def create_input_files(root, systems, basis_set, *, progress=True):
     if not io.exists():
         io.mkdir()
 
-    all_methods = sorted({x for value in benchmark_protocols.values() for x in value})
+    all_methods = sorted({x for value in benchmark_methods.values() for x in value})
 
     with tqdm(total=len(systems) * len(all_methods),
               desc='Writing input files',
               unit='gjf',
               disable=(not progress)) as pbar:
         sys = systems.items()
-        for protocol_name in all_methods:
-            protocol = available_protocols[protocol_name]
-            if protocol.redundancy is None:
-                path = io / Path(protocol_name)
+        for method_name in all_methods:
+            method = available_methods[method_name]
+            if method.redundancy is None:
+                path = io / Path(method_name)
                 if not path.exists():
                     path.mkdir()
                 for name, geom in sys:
                     job = GaussianJob(name='{} {}/{}'.format(name,
-                                                             protocol_name,
+                                                             method_name,
                                                              basis_set),
-                                      method=protocol_name, geometry=geom, basis_set=basis_set) 
+                                      method=method_name, geometry=geom, basis_set=basis_set) 
                     filename = str(path / Path(name+'.gjf')) 
                     job.write_input_file(filename)
                     pbar.update(1)
             else:
-                skipped[protocol.redundancy].append(protocol_name)
+                skipped[method.redundancy].append(method_name)
                 pbar.update(len(sys))
     for k, v in skipped.items():
         LOG.info('Skipping %s: calculation would be redundant when performing %s', ', '.join(v), k)
     return skipped
 
 
-def add_d3_correction_value(l, protocol_name, system_name, protocol, energies, systems):
+def add_d3_correction_value(l, method_name, system_name, method, energies, systems):
     """Add a dispersion corrected value if necessary"""
-    if not (protocol.includes_dispersion or \
-            protocol_name in already_dispersion_corrected):
+    if not (method.includes_dispersion or \
+            method_name in already_dispersion_corrected):
         try:
             s = systems[system_name]
         except KeyError as e:
             LOG.error('Could not find file %s', f)
             sys.exit(1)
-        if protocol_name in parameters['bj'].keys():
+        if method_name in parameters['bj'].keys():
             d3, _ = d3_correction(s.as_atomic_numbers(),
                                   s.as_coordinate_matrix(units='bohr'),
-                                  func=protocol_name)
+                                  func=method_name)
             LOG.debug("Dispersion correction for %s (%s): %s hartree",
-                      system_name, protocol_name, d3)
-            energies[protocol_name + ' + d3(bj)'][system_name] = l.scf_energy + d3
+                      system_name, method_name, d3)
+            energies[method_name + ' + d3(bj)'][system_name] = l.scf_energy + d3
         else:
-            LOG.debug('No parameters for %s', protocol_name)
+            LOG.debug('No parameters for %s', method_name)
 
 
 def add_mp2_variants(system_name, l, energies):
-    dependents = {n: p for n, p in available_protocols.items() if p.redundancy == 'mp2'}
+    dependents = {n: p for n, p in available_methods.items() if p.redundancy == 'mp2'}
     e_hf = l.hf_energy
     sc = l.mp2_spin_components
     LOG.debug('E(%s,mp2) = %s', system_name, l.scf_energy)
-    for method, protocol in dependents.items():
-        correction = scs_e2_correction(sc, **protocol.correction)
+    for method, method in dependents.items():
+        correction = scs_e2_correction(sc, **method.correction)
         energies[method][system_name] = e_hf + correction
         LOG.debug('E(%s,%s) = %s + %s = %s', system_name, method, e_hf,
                   correction, energies[method][system_name])
@@ -203,26 +203,26 @@ def read_outputs(directories, systems, pbar, *, suffix='.log', expected=1):
 
     for d in directories:
         log_files = [f for f in d.iterdir() if f.name.endswith(suffix)]
-        protocol_name = d.name
+        method_name = d.name
 
         if len(log_files) < expected:
             LOG.warn('Less log files than expected in %s (%d/%d)',
                      d, len(log_files), expected)
         try:
-            proto = available_protocols[protocol_name]
+            proto = available_methods[method_name]
         except KeyError as e:
-            LOG.warn('Unknown protocol %s', protocol_name)
+            LOG.warn('Unknown method %s', method_name)
             continue
         for f in log_files:
             l = G09LogFile(f)
             system_name = f.stem
             if l.converged:
                 try:
-                    energies[protocol_name][system_name] = l.scf_energy
+                    energies[method_name][system_name] = l.scf_energy
                     if HAVE_DFTD3_CORRECTION:
-                        add_d3_correction_value(l, protocol_name, system_name, proto, energies, systems)
+                        add_d3_correction_value(l, method_name, system_name, proto, energies, systems)
                         
-                    if protocol_name == 'mp2':
+                    if method_name == 'mp2':
                         add_mp2_variants(system_name, l, energies)
 
                 except FileFormatError as e:
