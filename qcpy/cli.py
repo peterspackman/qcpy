@@ -18,7 +18,7 @@ HAVE_DFTD3_CORRECTION = False
 try:
     from dftd3 import d3_correction, parameters
     HAVE_DFTD3_CORRECTION = True
-except ModuleNotFoundError as e:
+except Exception as e:
     pass
 
 LOG_FORMAT = '[%(name)s]: %(message)s'
